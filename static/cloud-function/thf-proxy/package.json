@@ -1,0 +1,8 @@
+{
+  "name": "thf-proxy",
+  "version": "0.4.0",
+  "description": "绘声绘色 云函数代理：转发 DeepSeek 与 MiniMax 请求，密钥保存在云函数环境变量中",
+  "main": "index.js",
+  "private": true,
+  "engines": { "node": ">=18" }
+}

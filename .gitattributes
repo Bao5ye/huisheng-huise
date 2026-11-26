@@ -1,0 +1,7 @@
+* text=auto
+# Windows 脚本与说明保持原样（CRLF、UTF-8 BOM），避免换行转换导致 PowerShell 出错
+*.bat -text
+*.ps1 -text
+*.txt -text
+static/static-site/config.js -text
+*.ico binary

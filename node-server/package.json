@@ -1,0 +1,9 @@
+{
+  "name": "tonghuifang-web",
+  "version": "0.3.0",
+  "description": "绘声绘色 儿童 AI 绘本工坊 网页版（DeepSeek 写故事，MiniMax 画插图）",
+  "main": "server.js",
+  "private": true,
+  "engines": { "node": ">=18" },
+  "scripts": { "start": "node server.js" }
+}

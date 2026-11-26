@@ -1,0 +1,10 @@
+# 密钥与本地配置，切勿提交
+.env
+.env.*
+config.json
+*.key
+# 打包产物与系统文件
+*.zip
+node_modules/
+.DS_Store
+Thumbs.db

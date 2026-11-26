@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="thf-token" content="__THF_TOKEN__">
+<script src="config.js"></script>
+<title>绘声绘色 AI绘本工坊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 布局：单栏工作台。顶部品牌条 + 步骤条 + 智能体状态条 + 当前步骤内容。身份决定主色与字号。 */
+  --paper:#F1F5EE; --card:#FFFFFF; --ink:#15232A; --muted:#51636B; --line:#D2DCD4;
+  --accent:#0E7C6B; --accent-soft:#DCEFEA; --sun:#F2B01E;
+  --ok:#1B7F4B; --warn:#8A5200; --bad:#B3261E;
+  --display:"ZCOOL KuaiLe","Microsoft YaHei UI","PingFang SC",sans-serif;
+  --body:"Microsoft YaHei UI","PingFang SC","Hiragino Sans GB","Noto Sans SC",sans-serif;
+  --r:14px; color-scheme:light;
+}
+html{font-size:16px}
+html[data-role="elder"]{font-size:20px;--accent:#A44D08;--accent-soft:#FBE8D5}
+html[data-role="child"]{font-size:18px;--accent:#C02459;--accent-soft:#FDE2EB}
+html[data-role="parent"]{--accent:#3B53C9;--accent-soft:#E2E7FB}
+html[data-hc="1"]{--paper:#FFFFFF;--ink:#000;--muted:#1d1d1d;--line:#000}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);line-height:1.65;-webkit-text-size-adjust:100%}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+.wrap{max-width:980px;margin:0 auto;padding:0 16px 64px;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;padding:14px 0 4px}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.logo{font-family:var(--display);font-size:1.75rem;color:var(--accent);line-height:1}
+.sub{color:var(--muted);font-size:.85rem}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.pill.ok i{background:var(--ok)} .pill.bad i{background:var(--bad)} .pill.wait i{background:var(--sun)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:8px 18px;border-radius:12px;border:2px solid var(--accent);background:var(--accent);color:#fff;font-weight:700;cursor:pointer;text-align:center}
+.btn:hover{filter:brightness(1.07)}
+.btn.ghost{background:var(--card);color:var(--accent)}
+.btn.sm{min-height:36px;padding:4px 12px;font-size:.85rem;border-width:1px;font-weight:600}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+html[data-role="elder"] .btn,html[data-role="child"] .btn{min-height:56px;font-size:1.05rem}
+html[data-role="elder"] .btn.sm,html[data-role="child"] .btn.sm{min-height:44px;font-size:.9rem}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.row.end{justify-content:flex-end}
+.steps{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.step{flex:1 0 auto;min-width:84px;border:0;background:transparent;padding:6px 4px 8px;border-bottom:4px solid var(--line);color:var(--muted);font-size:.85rem;cursor:pointer;text-align:left}
+.step b{display:block;font-size:.7rem;font-weight:600;opacity:.8}
+.step.on{border-color:var(--accent);color:var(--ink);font-weight:700}
+.step.done{border-color:color-mix(in srgb,var(--accent) 45%,var(--line))}
+.step[disabled]{cursor:default;opacity:.55}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.card h2{margin:0 0 4px;font-size:1.2rem}
+.card h3{margin:14px 0 6px;font-size:1rem}
+.hint{color:var(--muted);font-size:.88rem;margin:2px 0 0}
+h1.hero{font-family:var(--display);font-weight:400;font-size:clamp(1.7rem,5vw,2.5rem);margin:8px 0 0;text-wrap:balance;line-height:1.2}
+.lead{color:var(--muted);max-width:40em;margin:0}
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.role{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;align-items:center;text-align:left;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:16px;cursor:pointer;border-left:10px solid var(--accent)}
+.role:hover{border-color:var(--accent);background:var(--accent-soft)}
+.ric{grid-row:span 2;font-size:2.4rem;line-height:1}
+.rn{font-family:var(--display);font-size:1.35rem;color:var(--accent)}
+.rt{font-size:.78rem;font-weight:700;color:var(--muted)}
+.rd{grid-column:1/-1;color:var(--muted);font-size:.9rem;margin-top:6px}
+.pipe{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+.pipe .n{flex:1 1 118px;border:1px dashed var(--line);border-radius:12px;padding:8px 10px;background:var(--card);font-size:.82rem;color:var(--muted)}
+.pipe .n b{display:block;color:var(--ink);font-size:.92rem}
+.pipe .n em{font-style:normal;font-size:.7rem;font-weight:700;color:var(--accent)}
+.dock{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.dock-h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;font-size:.85rem}
+.ags{display:flex;gap:6px;overflow-x:auto}
+.ag{flex:0 0 auto;display:grid;grid-template-columns:auto auto;gap:0 6px;align-items:center;padding:4px 10px;border-radius:10px;border:1px solid var(--line);font-size:.78rem;color:var(--muted)}
+.ag i{width:9px;height:9px;border-radius:50%;background:var(--line);grid-row:span 2}
+.ag b{color:var(--ink);font-size:.82rem}
+.ag span{grid-column:2}
+.ag.run{border-color:var(--sun);background:#FFF7DF}.ag.run i{background:var(--sun);animation:pulse 1s infinite}
+.ag.done i{background:var(--ok)} .ag.err i{background:var(--bad)} .ag.err{border-color:var(--bad)}
+@keyframes pulse{50%{transform:scale(1.6);opacity:.5}}
+.working{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#FFF7DF;border:2px solid var(--sun);border-radius:var(--r);padding:12px 16px;font-weight:700}
+.dots{width:14px;height:14px;border-radius:50%;background:var(--sun);animation:pulse 1s infinite}
+.err{background:#FCEBE9;border:2px solid var(--bad);color:#6d1410;border-radius:var(--r);padding:12px 16px;display:flex;gap:12px;justify-content:space-between;align-items:flex-start}
+.stale{background:#FFF3D6;border:2px solid var(--sun);border-radius:var(--r);padding:12px 16px;color:#5a3b00;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.sec{display:flex;flex-direction:column;gap:14px}
+.q{display:flex;flex-direction:column;gap:8px}
+.q>label,.q>.ql{font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:40px;padding:6px 14px;border-radius:99px;border:2px solid var(--line);background:var(--card);cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.chip:hover{border-color:var(--accent)}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.chip .ci{font-size:1.25em;line-height:1}
+html[data-role="elder"] .chip,html[data-role="child"] .chip{min-height:60px;padding:8px 20px;border-radius:18px;font-size:1.05rem}
+html[data-role="child"] .chip .ci,html[data-role="elder"] .chip .ci{font-size:1.7em}
+.subs{margin:2px 0 6px;padding:10px;border-radius:12px;background:var(--accent-soft)}
+.subs .chip{min-height:34px;padding:2px 12px;font-size:.9rem;border-width:1px}
+.tf{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}
+.tf input,.tf textarea,.in{flex:1 1 220px;min-height:44px;padding:8px 12px;border-radius:12px;border:2px solid var(--line);background:var(--card);width:100%}
+.tf textarea{resize:vertical;line-height:1.6}
+.mic{min-height:44px;padding:6px 14px;border-radius:12px;border:2px solid var(--accent);background:var(--card);color:var(--accent);font-weight:700;cursor:pointer}
+.mic.on{background:var(--bad);border-color:var(--bad);color:#fff}
+.wiz{display:flex;flex-direction:column;gap:18px;min-height:320px}
+.wiz .wt{font-family:var(--display);font-size:1.7rem;line-height:1.3;margin:0;text-wrap:balance}
+.bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;font-size:.85rem}
+.grade div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--paper)}
+.grade b{display:block;font-size:1.05rem;font-variant-numeric:tabular-nums}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:8px 0}
+.kv dt{color:var(--muted);font-size:.85rem;white-space:nowrap}
+.kv dd{margin:0}
+.tag{display:inline-block;font-size:.75rem;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);margin-right:4px}
+.tag.w{background:#FFF3D6;color:var(--warn)} .tag.b{background:#FCEBE9;color:var(--bad)} .tag.g{background:#E1F3E8;color:var(--ok)}
+ol.beats{margin:6px 0;padding-left:1.4em} ol.beats li{margin:2px 0}
+.stars button{font-size:1.7rem;background:none;border:0;cursor:pointer;color:var(--line);padding:0 2px;line-height:1}
+.stars button.on{color:var(--sun)}
+.pg{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--card)}
+.pg-h{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between}
+.pg-h b{font-family:var(--display);font-weight:400;font-size:1.1rem;color:var(--accent)}
+.pg textarea{width:100%;border:2px solid var(--line);border-radius:10px;padding:8px 10px;font-size:1.05rem;line-height:1.7;resize:vertical;background:var(--card)}
+.pg .bigtxt{font-size:1.2rem;line-height:1.9;margin:0}
+.pg small{color:var(--muted)}
+.list{display:flex;flex-direction:column;gap:10px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:10px}
+.th{border:3px solid var(--line);border-radius:14px;padding:0;background:var(--card);cursor:pointer;overflow:hidden;text-align:left}
+.th img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
+.th span{display:block;padding:6px 10px 0;font-weight:700}
+.th small{display:block;padding:0 10px 8px;color:var(--muted);font-size:.78rem}
+.th.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.sw{display:inline-flex;border-radius:6px;overflow:hidden;border:1px solid rgba(0,0,0,.2)}
+.sw i{width:14px;height:20px;display:block}
+.shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.shot{display:grid;grid-template-columns:80px 1fr;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:6px;font-size:.82rem;background:var(--card)}
+.shot svg{width:80px;height:56px;border-radius:6px;display:block}
+.shot select{width:100%;min-height:30px;border-radius:8px;border:1px solid var(--line);background:var(--card);margin-top:2px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.cell{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card);display:flex;flex-direction:column}
+.cell .ph{aspect-ratio:4/3;display:grid;place-items:center;background:repeating-linear-gradient(45deg,#fff,#fff 10px,var(--paper) 10px,var(--paper) 20px);color:var(--muted);font-size:.9rem;text-align:center;padding:10px}
+.cell img{display:block;width:100%}
+.cell .cm{padding:8px 10px;display:flex;flex-direction:column;gap:6px;font-size:.85rem}
+.sheet{max-width:520px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.sheet img{display:block;width:100%}
+.book{max-width:760px;margin:0 auto;background:#fff;border-radius:20px;border:1px solid var(--line);box-shadow:0 10px 30px rgba(21,35,42,.12);overflow:hidden}
+.book .pic{position:relative;background:var(--paper)}
+.book .pic img{display:block;width:100%}
+.book .noimg{aspect-ratio:4/3;display:grid;place-items:center;color:var(--muted)}
+.book .ttl{position:absolute;left:0;right:0;top:0;padding:14px 16px 18px;text-align:center;font-family:var(--display);font-size:clamp(1.6rem,6vw,2.8rem);line-height:1.2;color:var(--ink);background:linear-gradient(rgba(255,255,255,.9),rgba(255,255,255,.72) 70%,rgba(255,255,255,0));text-wrap:balance}
+.book .ai{position:absolute;right:8px;bottom:8px;font-size:.7rem;background:rgba(255,255,255,.85);border-radius:6px;padding:1px 6px;color:var(--muted)}
+.book .txt{padding:18px 22px;font-size:1.3rem;line-height:1.95;letter-spacing:.02em;margin:0}
+.book .tip{margin:0 22px 16px;padding:8px 12px;border-left:4px solid var(--sun);background:#FFF7DF;font-size:.92rem;border-radius:0 8px 8px 0}
+.book .nav{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--line);flex-wrap:wrap}
+.pn{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.9rem}
+.chat{display:flex;flex-direction:column;gap:8px;max-height:320px;overflow:auto}
+.msg{padding:8px 12px;border-radius:12px;max-width:88%;white-space:pre-wrap}
+.msg.u{align-self:flex-end;background:var(--accent);color:#fff}
+.msg.a{align-self:flex-start;background:var(--paper);border:1px solid var(--line)}
+.ovl{position:fixed;inset:0;background:rgba(21,35,42,.45);display:flex;justify-content:flex-end;z-index:20}
+.drawer{width:min(560px,100%);height:100%;background:var(--paper);overflow:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+.drawer h2{margin:0;font-family:var(--display);font-weight:400;font-size:1.5rem}
+.fld{display:flex;flex-direction:column;gap:4px;margin:8px 0}
+.fld label{font-size:.85rem;font-weight:700}
+.fld textarea{min-height:92px;font-size:.88rem}
+.fld>.in{flex:none}
+.guide3{display:flex;flex-direction:column;gap:10px}
+.guide3 .g{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px}
+.guide3 .num{width:54px;height:54px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-family:var(--display);font-size:1.6rem}
+details{border:1px solid var(--line);border-radius:10px;padding:6px 12px;background:var(--card)}
+details summary{cursor:pointer;font-weight:700;padding:4px 0}
+pre.pp{white-space:pre-wrap;word-break:break-word;font-size:.78rem;background:var(--paper);padding:10px;border-radius:8px;max-height:260px;overflow:auto;margin:6px 0}
+a{color:var(--accent)}
+ul.plain{margin:6px 0;padding-left:1.2em}
+@media (max-width:520px){.card{padding:14px}.book .txt{font-size:1.15rem;padding:14px 16px}.roles{grid-template-columns:1fr 1fr}.role{grid-template-columns:1fr;padding:12px}.ric{grid-row:auto}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+'use strict';
+/* ========== 基础数据 ========== */
+const ROLES={
+  librarian:{name:'图书馆员',tag:'专业模式',icon:'📚',desc:'为故事会、主题活动、分级阅读指导定制绘本，可调智能体约束，附活动方案',c:'#0E7C6B',s:'#DCEFEA'},
+  parent:{name:'爸爸妈妈',tag:'简洁模式',icon:'👨‍👩‍👧',desc:'一页填完孩子的情况，直接看故事、选画风',c:'#3B53C9',s:'#E2E7FB'},
+  elder:{name:'爷爷奶奶',tag:'大字语音模式',icon:'👵',desc:'字大、一步一问，每一步都能点喇叭听讲解',c:'#A44D08',s:'#FBE8D5'},
+  child:{name:'小朋友自己',tag:'图画语音模式',icon:'🧒',desc:'点图画、说句话，做一本自己的书',c:'#C02459',s:'#FDE2EB'}
+};
+const BANDS=[
+  {id:'0-3',label:'0—3岁',pages:6,chars:[8,20],lang:'极短句、拟声词和叠词，同一句式反复出现；一页只认识一样东西'},
+  {id:'3-4',label:'3—4岁',pages:6,chars:[15,35],lang:'短句，重复句式，贴近日常生活，情节是简单的先后顺序'},
+  {id:'4-5',label:'4—5岁',pages:8,chars:[25,50],lang:'短句为主，可有简单对话，情节有一个小波折'},
+  {id:'5-6',label:'5—6岁',pages:8,chars:[35,70],lang:'句子完整，有对话和简单因果，可以出现 1—2 个新词并在上下文里解释'},
+  {id:'6-7',label:'6—7岁',pages:8,chars:[50,90],lang:'适合开始自主阅读：常用字为主，句子不过长，有起因—经过—结果'},
+  {id:'7-8',label:'7—8岁',pages:10,chars:[60,110],lang:'可有多个角色和转折，适量形容词和心理描写，知识点可稍具体'},
+  {id:'8-12',label:'8—12岁',pages:10,chars:[90,160],lang:'情节更完整，可以有悬念和幽默，知识内容要有依据、讲清原理'}
+];
+const INTS=[
+  {id:'animal',label:'动物',icon:'🦊',subs:['小狐狸','兔子','小猫','小狗','大象','熊猫','小鸟','昆虫','海洋动物']},
+  {id:'dino',label:'恐龙',icon:'🦕',subs:['霸王龙','三角龙','腕龙','翼龙','剑龙','恐龙蛋与化石']},
+  {id:'vehicle',label:'交通工具',icon:'🚒',subs:['消防车','火车','挖掘机','飞机','轮船','公交车','火箭']},
+  {id:'plant',label:'植物',icon:'🌻',subs:['花朵','大树','种子发芽','蔬菜水果','蘑菇','四季变化']},
+  {id:'space',label:'太空',icon:'🚀',subs:['月亮','星星','行星','宇航员']},
+  {id:'ocean',label:'海洋',icon:'🐳',subs:['鲸鱼','海龟','珊瑚礁','潜水艇']},
+  {id:'food',label:'美食',icon:'🍜',subs:['包饺子','面条','水果','做蛋糕']},
+  {id:'festival',label:'节日与传统',icon:'🏮',subs:['春节','中秋','端午','二十四节气','民间故事']},
+  {id:'robot',label:'机器人与科技',icon:'🤖',subs:['机器人朋友','发明创造','人工智能']},
+  {id:'library',label:'图书馆与书',icon:'📖',subs:['去图书馆','借书还书','书里的世界']},
+  {id:'daily',label:'日常生活',icon:'🏡',subs:['幼儿园','交朋友','家人','睡觉','刷牙洗手']},
+  {id:'other',label:'其他',icon:'✏️',subs:[]}
+];
+const INT=Object.fromEntries(INTS.map(x=>[x.id,x]));
+const ALLR=['librarian','parent','elder','child'];
+const o=(v,i,l,lc)=>({v,l:l||v,i,lc});
+const Q=[
+  {id:'nick',sec:'小读者',type:'text',t:'孩子的小名（可不填）',te:'孩子的小名叫什么？',tc:'你叫什么名字呀？',ph:'用小名就好，不用填真实全名',opt:1},
+  {id:'band',sec:'小读者',type:'one',t:'孩子的年龄',te:'孩子今年几岁？',tc:'你几岁啦？',opts:BANDS.map(b=>o(b.id,null,b.label)),req:1},
+  {id:'gender',sec:'小读者',type:'one',t:'孩子的性别',te:'是孙女还是孙子？',tc:'你是女孩还是男孩？',opts:[o('女孩','👧'),o('男孩','👦'),o('不指定','🌈')]},
+  {id:'how',sec:'阅读情况',type:'one',roles:['librarian','parent'],t:'孩子现在怎么读',opts:['大人读给孩子听','大人孩子一起指读','孩子看图自己讲','孩子开始认字自己读','孩子独立阅读'].map(x=>o(x))},
+  {id:'when',sec:'阅读情况',type:'one',roles:['parent'],t:'通常什么时候读',opts:['睡前','午后或放学后','周末去图书馆时','随时'].map(x=>o(x))},
+  {id:'interests',sec:'兴趣',type:'interest',t:'孩子喜欢什么（可多选，选中后再挑具体的）',te:'孩子喜欢什么？点一点',tc:'你最喜欢什么？点一点',req:1},
+  {id:'crush',sec:'兴趣',type:'text',t:'最近什么让孩子着迷（可不填）',te:'最近孩子老念叨什么？',tc:'最近你最想玩什么、看什么？',ph:'例如：天天要看挖掘机干活',opt:1},
+  {id:'hero',sec:'主角与故事',type:'one',custom:1,t:'谁当主角（只能选一个）',te:'让谁来当故事的主角？',tc:'让谁来当主角？',opts:[o('孩子本人','🙋',null,'我自己'),o('喜欢的动物或事物','🐾',null,'我喜欢的动物'),o('孩子和动物朋友一起','🤝',null,'我和动物朋友'),o('一个原创的新角色','✨',null,'一个新朋友')]},
+  {id:'heroName',sec:'主角与故事',type:'text',roles:['librarian','parent'],t:'主角的名字（可不填，不填由故事策划来起）',ph:'例如：阿橘、豆豆',opt:1},
+  {id:'tone',sec:'主角与故事',type:'one',custom:1,t:'故事基调（只选一个）',te:'想要什么味道的故事？',tc:'你想要什么样的故事？',opts:[o('好笑的','😄'),o('冒险的','🧭'),o('温暖的','🤗'),o('神奇的','✨'),o('安静的','🌙')]},
+  {id:'place',sec:'主角与故事',type:'one',custom:1,roles:['librarian','parent','child'],t:'故事发生在哪里',tc:'故事发生在哪里？',opts:[o('家里','🏠'),o('幼儿园或学校','🏫'),o('森林','🌲'),o('海边','🏖️'),o('城市','🏙️'),o('乡村田野','🌾'),o('太空','🪐'),o('图书馆','📚')]},
+  {id:'family',sec:'主角与故事',type:'multi',custom:1,roles:['parent','elder','child'],t:'让谁也出现在故事里（可多选）',te:'要不要让家里人也进故事？',tc:'还想让谁出现在故事里？',opts:[o('爸爸','👨'),o('妈妈','👩'),o('爷爷','👴'),o('奶奶','👵'),o('外公','🧓'),o('外婆','👵'),o('兄弟姐妹','🧒'),o('宠物','🐶')]},
+  {id:'goals',sec:'这本书的目标',type:'multi',max:2,custom:1,roles:['librarian','parent','elder'],t:'希望这本绘本带来什么（最多选 2 项）',te:'想让孩子从书里学点什么？最多选两样',opts:[o('生活习惯','🪥'),o('认识情绪','😊'),o('交朋友与分享','🤝'),o('自然科普','🔍'),o('传统文化','🏮'),o('安全常识','🚦'),o('爱上阅读与图书馆','📖'),o('数与形启蒙','🔢'),o('勇气与自信','💪')]},
+  {id:'engage',sec:'这本书的目标',type:'multi',custom:1,roles:['librarian','parent'],t:'互动方式（可多选）',opts:['有重复的句子可以跟读','有找一找、数一数的小任务','有可以模仿的动作或声音','结尾留一个问题让孩子想'].map(x=>o(x))},
+  {id:'avoid',sec:'这本书的目标',type:'multi',custom:1,roles:['librarian','parent','elder'],t:'孩子害怕或要避开的内容（可多选）',te:'孩子怕什么？故事里就不写',opts:[o('黑暗','🌑'),o('怪物','👾'),o('打针看病','💉'),o('和家人分开','🚪'),o('很大的声响','📢'),o('虫子','🐛'),o('高处','🧗')]},
+  {id:'langStyle',sec:'文字风格',type:'one',custom:1,roles:['librarian','parent'],t:'语言风格',opts:['平实叙述','儿歌一样押韵','对话多一些','拟声词多一些'].map(x=>o(x))},
+  {id:'ending',sec:'文字风格',type:'one',custom:1,roles:['librarian','parent'],t:'结尾方式',opts:['圆满温暖','留一个小悬念','回到睡觉或回家','点出一个小道理'].map(x=>o(x))},
+  {id:'density',sec:'文字风格',type:'one',roles:['librarian','parent'],t:'每页文字量（不选则按年龄推荐）',opts:[o('less',null,'比推荐少一些'),o('more',null,'比推荐多一些')]},
+  {id:'actType',sec:'活动信息',type:'one',roles:['librarian'],t:'用在什么活动',opts:['绘本故事会','主题阅读活动','分级阅读指导','亲子共读课堂','流动服务与进社区'].map(x=>o(x))},
+  {id:'group',sec:'活动信息',type:'one',roles:['librarian'],t:'参与规模',opts:['一对一','小组（5—10人）','集体（20人以上）'].map(x=>o(x))},
+  {id:'actTheme',sec:'活动信息',type:'text',roles:['librarian'],t:'活动主题或节日（可不填）',ph:'例如：世界读书日、立冬节气',opt:1},
+  {id:'concern',sec:'家庭情况',type:'text',roles:['parent'],t:'最近想帮孩子解决的小问题（可不填）',ph:'例如：不爱刷牙、怕黑、刚上幼儿园',opt:1},
+  {id:'minutes',sec:'家庭情况',type:'one',roles:['parent'],t:'一次陪读多久',opts:['5 分钟','10 分钟','15 分钟以上'].map(x=>o(x))},
+  {id:'elderMode',type:'one',roles:['elder'],te:'您想怎么陪孩子读？',opts:[o('我读给孩子听','📖'),o('机器朗读，我们一起听','🔊'),o('我和孩子看图讲','🖼️')]},
+  {id:'oldTale',type:'one',roles:['elder'],te:'要不要加点老故事的味道？',opts:[o('不用','🙂'),o('加一点我小时候的事','🏡'),o('加入节气和老习俗','🏮'),o('像民间故事那样讲','📜')]},
+  {id:'pages',sec:'篇幅与其他',type:'one',roles:['librarian','parent'],t:'正文页数（不选则按年龄推荐）',opts:[o('4',null,'4 页（测试最快）'),o('6',null,'6 页'),o('8',null,'8 页'),o('10',null,'10 页'),o('12',null,'12 页')]},
+  {id:'custom',sec:'篇幅与其他',type:'text',roles:['librarian','parent'],t:'其他要求（可不填）',ph:'例如：主角戴红围巾；故事结尾在图书馆',opt:1,rows:2}
+];
+const AGENTS=[
+  {id:'planner',name:'故事策划',kid:'点子大王',cap:'文字',does:'把需求归纳成故事核、情感弧线、反复句、核心意象和逐页节拍',say:'点子大王负责听懂您的要求，先想出一个故事的大概。',c:'先找到故事核：主角真正想要的一件具体的小事，或遇到的一个具体的小麻烦，而不是一个道理。\n主线只有一条，情绪有起伏：平静→好奇或困难→几次尝试→转折→温暖落地。\n必须用上需求里的兴趣和细分对象，不要换成别的题材。\n书名要有画面感、勾起好奇，不要“XX的故事”“XX学会了XX”式的直白标题。\n知识点 1—2 个，要准确、具体、孩子能在生活里验证。'},
+  {id:'writer',name:'故事作家',kid:'故事老师',cap:'文字',does:'按分级框定逐页写出绘本文字和画面说明',say:'故事老师负责把故事一页一页写出来，字数会照着孩子的年龄来。',c:'严格遵守每页字数范围。\n写给耳朵听：每一句都要经得起大声朗读。\n低龄段以节奏、重复、拟声为主；高龄段可以有更多对话和心理活动。\n不说教，道理藏在情节里。'},
+  {id:'editor',name:'文学编辑',kid:'润色老师',cap:'文字',does:'逐页朗读初稿并润色：节奏、用词、反复句、首尾呼应、翻页钩子',say:'润色老师会把故事从头到尾读一遍，让句子更好听、更有味道。',c:'像给出版社交稿一样严格：每一句都经得起大声朗读。\n宁可少一个字，不多一个字。\n保留孩子气和幽默，不要改得老气、华丽或像作文。\n好句子保持原样，不为改而改。'},
+  {id:'reviewer',name:'适龄审校',kid:'把关老师',cap:'文字',does:'核对字数、用词、知识准确性、安全与需求契合度',say:'把关老师负责检查故事，看看有没有不适合孩子的地方。',c:'逐页核对字数、句长和用词是否适龄。\n核查知识点是否准确，拿不准的要指出。\n检查有无惊吓、危险模仿、刻板印象。\n对照需求，指出没有回应到的地方。'},
+  {id:'director',name:'分镜导演',kid:'镜头导演',cap:'文字',does:'为每页设计景别、视角、站位和背景，制定生图策略',say:'镜头导演负责安排每一页怎么画：有的画近一点，有的画远一点。',c:'相邻两页的景别不能相同，全书至少用到 4 种景别、3 种视角。\n高潮页用近景或特写，开场和结尾用远景或全景。\n写清每页角色的站位、动作、朝向，以及背景与上一页的不同。'},
+  {id:'designer',name:'角色设计师',kid:'造型师',cap:'图像',does:'先画角色三视图定妆图，作为全书的一致性参考',say:'造型师先把主角的样子定下来，这样每一页的主角都长得一样。',c:'主角造型简洁，有 1—2 个一眼能认出的标志物（围巾、帽子、斑纹等）。\n配色固定，每个部位用什么颜色要明确。'},
+  {id:'painter',name:'插画师',kid:'小画家',cap:'图像',does:'以定妆图和第 1 页为参考逐页作画，角色一致、镜头有变化',say:'小画家负责画画，一页一页画出来，要等一小会儿。',c:'角色的配色、比例、标志物必须与定妆一致。\n每页有前景、中景、背景三层。\n画面里不出现文字。'},
+  {id:'guide',name:'导读馆员',kid:'领读员',cap:'文字',does:'生成读后提问、陪读提示、延伸活动，并陪孩子聊这本书',say:'领读员负责读完以后和孩子聊一聊，出几个小问题。',c:'问题从回忆、理解、联想、表达四个层次各出一个。\n活动材料必须是家里或图书馆里容易找到的。\n不推荐具体书名，只给馆藏检索主题词。'}
+];
+const AG=Object.fromEntries(AGENTS.map(a=>[a.id,a]));
+const STYLES=[
+  {id:'watercolor',name:'水彩手绘',desc:'颜色晕染，边缘柔和',prompt:'水彩手绘风：色块边缘柔和、不描黑边，用半透明色块（opacity 0.5—0.9）层层叠加出晕染感，留少量纸白',t2i:'水彩手绘，颜色晕染，边缘柔和',kit:{disp:[0.02,9],blur:0.6,grain:0.16}},
+  {id:'crayon',name:'蜡笔涂鸦',desc:'笔触粗糙，像孩子画的',prompt:'蜡笔涂鸦风：形状略带歪斜的童趣，用圆头粗线（stroke-width 5—8，stroke-linecap round）勾边，色块饱满',t2i:'蜡笔涂鸦，粗糙笔触，童趣',kit:{disp:[0.9,4],grain:0.24}},
+  {id:'papercut',name:'剪纸拼贴',desc:'纸片一层层叠出纵深',prompt:'剪纸拼贴风：所有形状都是纯色纸片，无描边、无渐变；按远近分 4—6 个图层组，每个图层组加 filter="url(#sk-shadow)" 形成纸片投影',t2i:'剪纸拼贴，纯色纸片分层，有投影',kit:{shadow:[4,3,0.3],grain:0.08,layer:1}},
+  {id:'flat',name:'扁平卡通',desc:'线条干净，色块明快',prompt:'扁平卡通风：圆润的几何造型，统一的深色描边（stroke-width 4，stroke-linejoin round），纯色填充，点少量高光',t2i:'扁平卡通，干净描边，明快色块',kit:{outline:1}},
+  {id:'ink',name:'水墨淡彩',desc:'留白、淡彩，有诗意',prompt:'中国水墨淡彩风：大面积留白，远山用半透明灰色层叠，墨色有浓淡，主体只点少量淡彩，线条有毛笔般的粗细变化',t2i:'中国水墨淡彩，留白，写意',kit:{disp:[0.015,12],blur:0.8,sat:0.45,grain:0.14}},
+  {id:'clay',name:'黏土立体',desc:'圆滚滚，有光泽和落影',prompt:'黏土立体风：形状圆滚饱满，用径向渐变（radialGradient）做出体积感，点白色高光，每个主要物体加 filter="url(#sk-shadow)" 落影',t2i:'黏土定格动画质感，圆润立体，柔和落影',kit:{shadow:[5,4,0.28],gloss:1,grain:0.05}},
+  {id:'pencil',name:'彩铅手绘',desc:'细线排笔，淡雅温柔',prompt:'彩色铅笔手绘风：用细线（stroke-width 1.5—3）排线表现明暗，颜色淡雅，留白较多',t2i:'彩色铅笔手绘，细腻排线，淡雅留白',kit:{disp:[0.6,2.5],sat:0.8,grain:0.3}},
+  {id:'line',name:'简笔线描',desc:'深色线条勾形，少量点色',prompt:'简笔线描风：以深色圆头线条勾形为主（stroke-width 3），只给主角和关键物件上色，背景大面积留白',t2i:'简笔画线描，少量点色，大面积留白',kit:{outline:1,sat:0.6}}
+];
+/* 色板顺序：[天空或底色, 亮色, 主角色, 次色, 强调色, 深色] */
+const PALS=[
+  {id:'sun',name:'暖阳',c:['#FFF1CF','#FFC94D','#E8743B','#8DB86B','#5E9C76','#5B3A29']},
+  {id:'mint',name:'清晨薄荷',c:['#E6F7F1','#F9D976','#F28C8C','#8FD3BF','#4FAE9B','#2F4858']},
+  {id:'night',name:'星夜',c:['#27306B','#F6D860','#F7A8B8','#5562B8','#3B4590','#12173A']},
+  {id:'candy',name:'糖果',c:['#FFF0F6','#FFD166','#FF8FB1','#8EE3F5','#B79CED','#5C4B8A']},
+  {id:'forest',name:'森林',c:['#EEF3E2','#E9C46A','#C8553D','#7A9E5F','#3F6B4F','#2E2A25']},
+  {id:'sea',name:'海蓝',c:['#E4F3FB','#FFD27D','#FF7F6B','#6CC5E8','#2E86C1','#173A5E']}
+];
+const RATIOS={'4:3':[800,600,'横版 4:3'],'1:1':[700,700,'方形 1:1'],'3:4':[600,800,'竖版 3:4']};
+const SHOTS={'远景':'角色很小（约占画面高度的六分之一），以环境为主，画出完整的场景、天空和地面','全景':'画出角色全身，角色约占画面高度的三分之一到一半，周围环境清楚','中景':'角色画到腰部以上，约占画面高度的三分之二，背景简化','近景':'角色画到胸口以上，脸和表情占画面大部分','特写':'只画脸部，或只画手和关键物件的局部，主体充满画面'};
+const ANGLES={'平视':'镜头与角色眼睛同高','俯视':'从上往下看：地面占画面大部分，能看到角色头顶和物体顶面','仰视':'从下往上看：地平线很低，角色显得高大，天空占大部分','侧面':'角色侧身，朝画面一侧行进，画出运动方向','背后':'画角色的背影，让读者和角色一起看向远处'};
+const SAFETY='【儿童安全】不出现暴力、恐怖、歧视、危险模仿行为、商业品牌和真实人物；知识内容必须准确，拿不准的知识不要写。';
+const FB=['太长了','太简单了','想更有趣','想多点知识','换个主角','结尾再温暖些'];
+const ERR={no_engine:'这个页面现在没有连上模型。请在 Claude 里打开本页并允许它使用 Claude；没有模型时不会用固定模板冒充生成结果。',no_key:'还没有填写 API 密钥。请点右上角“设置”，把 DeepSeek 和生图模型的密钥都填上。',bad_key:'密钥无效或已被删除，请在设置里重新填写。',no_balance:'账户余额不足，请到对应平台充值后再试。',bad_code:'访问码不对或已过期，请回首页重新输入。',not_granted:'你没有允许本页使用 Claude，所以无法生成。重新打开页面后可以再选一次。',sampling_disabled:'这个账号暂时不能在页面里使用 Claude。',rate_limited:'调用太频繁，或已到用量上限。请等一会儿再点重试。',refused:'模型拒绝了这次请求。请修改需求或意见后再试。',invalid_json:'模型这次返回的格式不对，请点重试。',session_expired:'登录已过期，请重新登录 Claude 后再试。',network:'连不上模型接口。请先检查网络和密钥。如果网络正常仍然失败，说明浏览器拦截了对 DeepSeek 或 MiniMax 的直接访问：请改用 Windows 本地版，或按部署说明为网页配置云函数代理。',bad_svg:'这一页的图形代码不完整，没有画成。请点重画。',http:'接口返回了错误，请检查密钥、模型名和余额。'};
+
+/* ========== 状态 ========== */
+let SEQ=0;
+const S={role:null,step:'role',wiz:0,
+  needs:{nick:'',band:'',gender:'不指定',how:'',when:'',interests:{},crush:'',goals:[],engage:[],avoid:[],family:[],tone:'',hero:'',heroName:'',place:'',langStyle:'',ending:'',density:'',actType:'',group:'',actTheme:'',concern:'',minutes:'',elderMode:'',oldTale:'',pages:'',custom:''},
+  needsRev:0,outline:null,story:null,
+  art:{style:'watercolor',palette:'sun',ratio:'4:3',detail:'std',mood:'',customStyle:'',note:'',useRef:true,sheet:null,imgs:{},batch:null,trial:false},
+  guide:null,chat:[],chatIn:'',reader:{i:0,auto:false,tips:true},
+  cfg:{creative:'均衡',remember:false,edit:true,img:{engine:'seedream'},tts:{engine:'tencent',voice:'403011',speed:'-0.5'},ark:{endpoint:'https://ark.cn-beijing.volces.com/api/v3/images/generations',model:'doubao-seedream-5-0-flash-260915',key:''},text:{provider:'deepseek',endpoint:'https://api.deepseek.com',model:'deepseek-v4-flash',writeModel:'deepseek-v4-pro',key:''},image:{provider:'minimax',endpoint:'https://api.minimaxi.com/v1/image_generation',model:'image-01',key:''},voice:true,hc:false},
+  customOpts:{},cons:Object.fromEntries(AGENTS.map(a=>[a.id,a.c])),
+  ag:{},load:{},ui:{test:{},gate:'',gateOk:false,fullCfg:false,storyFb:'',notes:{}},drawer:false,err:null};
+const CAP={sample:null,tts:null,dict:null,dl:null,checked:false};
+const CTLS=new Set();
+const isSimple=()=>S.role==='elder'||S.role==='child';
+const band=()=>BANDS.find(b=>b.id===S.needs.band)||BANDS[2];
+const pagesN=()=>+S.needs.pages||band().pages;
+const cr=()=>{const b=band(),f={less:0.7,more:1.3}[S.needs.density]||1;return [Math.round(b.chars[0]*f),Math.round(b.chars[1]*f)];};
+/* 在线演示页（Claude Artifact）不能直连外部接口，由内置引擎代演；本地打开时文字走 DeepSeek、图片走 MiniMax */
+const ONLINE=!!(window.claude&&typeof window.claude.use==='function');
+/* BK：由绘声绘色本地服务或网页版服务端提供页面时，所有模型调用都经它转发，密钥不进浏览器 */
+let BK=null;
+/* 接口地址：同源部署时为空；腾讯云静态托管 + 云函数时在 config.js 里填写云函数地址 */
+const API=String(window.THF_API||'').trim().replace(/\/+$/,'');
+/* 本地服务会把 meta 里的占位符换成随机口令；脚本里不能再出现完整的占位符，否则会被一起替换掉 */
+const TOKEN=(t=>/^__THF_/.test(t)?'':t)(((document.querySelector('meta[name="thf-token"]')||{}).content||''));
+function hdr(){const x={'Content-Type':'application/json'};if(TOKEN)x['X-App-Token']=TOKEN;if(S.ui.code)x['X-Access-Code']=encodeURIComponent(S.ui.code);return x;}
+const eff=kind=>ONLINE?'builtin':BK?'proxy':S.cfg[kind].provider;
+/* 位图生图：Seedream（推荐，多参考图锁定角色）或 MiniMax；在线演示页由内置引擎画矢量图 */
+const bitmap=()=>!ONLINE;
+const imgEngine=()=>S.cfg.img.engine==='minimax'?'minimax':'seedream';
+const WM=()=>S.cfg.text.writeModel||S.cfg.text.model;
+function imgReady(){const sd=imgEngine()==='seedream';if(BK)return sd?!!BK.ark:!!BK.image;return sd?!!S.cfg.ark.key:!!S.cfg.image.key;}
+const SD_MODELS=[['doubao-seedream-5-0-flash-260915','Seedream 5.0 Flash（推荐，快、便宜）'],['doubao-seedream-5-5-261028','Seedream 5.5（画质更好）'],['doubao-seedream-4-0-250828','Seedream 4.0']];
+const sdLabel=()=>{const m=SD_MODELS.find(x=>x[0]===S.cfg.ark.model);return m?m[1].replace(/（.*/,''):'Seedream（'+S.cfg.ark.model+'）';};
+const imgName=()=>imgEngine()==='seedream'?sdLabel():'MiniMax image-01';
+const humanHero=()=>/^孩子/.test(S.needs.hero||'');
+try{const m=localStorage.getItem('thf-sd-model');if(m)S.cfg.ark.model=m;}catch(e){}
+try{const t=JSON.parse(localStorage.getItem('thf-tts')||'null');if(t){if(t.voice)S.cfg.tts.voice=String(t.voice);if(t.speed!=null)S.cfg.tts.speed=String(t.speed);if(t.engine)S.cfg.tts.engine=t.engine;S.ui.voicePicked=!!t.picked;}}catch(e){}
+async function httpErr(r){let j={};try{j=await r.clone().json();}catch(e){}
+  const e=typeof j.error==='string'?j.error:'';
+  if(['no_key','bad_code','network'].includes(e))return{code:e};
+  if(e==='rate'||r.status===429)return{code:'rate_limited'};
+  if(r.status===401)return{code:'bad_key'};
+  if(r.status===402)return{code:'no_balance'};
+  const m=(j.error&&j.error.message)||(j.base_resp&&j.base_resp.status_msg)||'';
+  return{code:'http',message:'HTTP '+r.status+(m?'，'+m:'')};}
+const TEMP=()=>({'稳妥':0.6,'有创意':1.3}[S.cfg.creative]||1);
+const PD={sun:'暖黄、橙色、草绿',mint:'薄荷绿、淡黄、珊瑚粉',night:'深蓝夜空、星光黄、淡粉',candy:'粉红、天蓝、淡紫、奶黄',forest:'森林绿、土黄、砖红',sea:'海蓝、天蓝、珊瑚橙'};
+function persist(){try{if(S.cfg.remember)localStorage.setItem('thf-keys',JSON.stringify({t:S.cfg.text.key,i:S.cfg.image.key,a:S.cfg.ark.key}));else localStorage.removeItem('thf-keys');}catch(e){}}
+const curStyle=()=>STYLES.find(s=>s.id===S.art.style);
+const curPal=()=>PALS.find(p=>p.id===S.art.palette);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ========== DOM 小工具 ========== */
+function h(tag,a,...kids){const e=document.createElement(tag);
+  if(a)for(const k in a){const v=a[k];if(v==null||v===false)continue;
+    if(k==='class')e.className=v;else if(k==='html')e.innerHTML=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);
+    else if(k==='value')e.value=v;else e.setAttribute(k,v===true?'':v);}
+  for(const c of kids.flat(Infinity)){if(c==null||c===false||c==='')continue;e.append(c.nodeType?c:document.createTextNode(String(c)));}
+  return e;}
+const app=document.getElementById('app');
+function render(){const a=document.activeElement,id=a&&a.id,ss=a&&a.selectionStart;
+  document.documentElement.dataset.role=S.role||'';document.documentElement.dataset.hc=S.cfg.hc?'1':'';
+  app.replaceChildren(view());
+  if(id){const n=document.getElementById(id);if(n&&n!==document.activeElement){n.focus({preventScroll:true});try{if(ss!=null)n.setSelectionRange(ss,ss);}catch(e){}}}}
+function go(step){S.step=step;S.err=null;render();window.scrollTo({top:0});}
+function fail(e){if(e&&e.code==='cancelled')return;S.err=emsg(e);}
+function emsg(e){if(e&&BK&&BK.mode==='web'&&(e.code==='bad_key'||e.code==='no_balance'))return e.code==='bad_key'?'服务器上配置的密钥无效，请联系管理员。':'模型账户余额不足，请联系管理员充值。';return (e&&ERR[e.code])||(e&&e.code==='http'&&e.message?ERR.http+'（'+e.message+'）':'')||'生成中断了，请点重试。';}
+
+/* ========== 能力：模型、朗读、听写、下载 ========== */
+function initCaps(){
+  if(!ONLINE){CAP.checked=true;
+    if(API||/^https?:$/.test(location.protocol)){try{S.ui.code=sessionStorage.getItem('thf-code')||'';}catch(e){}
+      fetch(API+'/api/status',{headers:hdr()}).then(r=>r.ok?r.json():null).then(j=>{if(!j||!j.mode)return;BK=j;S.ui.codeOk=!!j.codeOk;if(j.textModel)S.cfg.text.model=j.textModel;if(j.writeModel)S.cfg.text.writeModel=j.writeModel;S.cfg.img.engine=(j.image&&!j.ark)?'minimax':'seedream';
+        if(j.mode==='local')setInterval(()=>{fetch(API+'/api/ping',{headers:hdr()}).catch(()=>{});},15000);render();}).catch(()=>{});}
+    try{const k=JSON.parse(localStorage.getItem('thf-keys')||'null');if(k){S.cfg.text.key=k.t||'';S.cfg.image.key=k.i||'';S.cfg.ark.key=k.a||'';S.cfg.remember=true;if(!k.a&&k.i)S.cfg.img.engine='minimax';}}catch(e){}
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(SR){let rec=null;CAP.dict={start(){return new Promise((res,rej)=>{try{rec=new SR();rec.lang='zh-CN';rec.interimResults=false;
+        rec.onresult=e=>{const t=Array.from(e.results).map(r=>r[0].transcript).join('');if(dictT&&t)dictT.set((dictT.get()?dictT.get()+' ':'')+t);};
+        rec.onend=()=>{dictOn=false;render();};rec.onerror=()=>{dictOn=false;render();};rec.start();dictOn=true;render();res();}catch(e){rej(e);}});},
+      stop(){try{rec&&rec.stop();}catch(e){}return Promise.resolve();}};}
+    return;}
+  const use=n=>window.claude.use(n).catch(()=>null);
+  use('sample').then(v=>{CAP.sample=v;CAP.checked=true;render();});
+  use('tts').then(v=>{CAP.tts=v;render();});
+  use('downloads').then(v=>{CAP.dl=v;render();});
+  use('dictation').then(d=>{if(!d)return;CAP.dict=d;
+    try{d.onFinal(({text})=>{if(dictT){dictT.set((dictT.get()?dictT.get()+' ':'')+text);render();}});
+        d.onState(({state})=>{dictOn=state==='listening';render();});}catch(e){}
+    render();});
+}
+let dictT=null,dictOn=false;
+function mic(id,get,set){if(!CAP.dict)return null;const mine=dictOn&&dictT&&dictT.id===id;
+  return h('button',{class:'mic'+(mine?' on':''),type:'button',onclick:()=>{
+    if(dictOn){CAP.dict.stop().catch(()=>{});return;}
+    dictT={id,get,set};CAP.dict.start().catch(e=>{if(e&&e.code==='not_granted'){CAP.dict=null;render();}});
+  }},mine?'■ 说完了':'🎤 说话');}
+/* 腾讯云超自然大模型 2.0 音色（402xxx、403xxx、404xxx），按讲故事的用途分组 */
+const VOICES=[
+  {g:'讲故事',id:'403011',n:'云嘉瑜',d:'情感解说女声（讲解机器人同款）'},
+  {g:'讲故事',id:'402001',n:'云小团',d:'温柔甜美女声'},
+  {g:'讲故事',id:'403005',n:'云雅琴',d:'沉稳女老师'},
+  {g:'讲故事',id:'403014',n:'云佳洁',d:'轻熟姐姐'},
+  {g:'讲故事',id:'403010',n:'云嘉和',d:'温和男声'},
+  {g:'讲故事',id:'403004',n:'云大川',d:'活力男老师'},
+  {g:'讲故事',id:'402002',n:'云大围',d:'磁性男声'},
+  {g:'童声',id:'403000',n:'云小朵',d:'特色女童声'},
+  {g:'童声',id:'403008',n:'云小洋',d:'机灵男童'},
+  {g:'更多风格',id:'402000',n:'云晓芙',d:'聊天女声'},
+  {g:'更多风格',id:'403001',n:'云小和',d:'聊天女声'},
+  {g:'更多风格',id:'403013',n:'云小璇',d:'活力女青年'},
+  {g:'更多风格',id:'403003',n:'云小天',d:'青春校园男声'},
+  {g:'更多风格',id:'403002',n:'云小帅',d:'解说男声'},
+  {g:'更多风格',id:'403012',n:'云嘉辉',d:'激情解说男声'},
+  {g:'更多风格',id:'403009',n:'云嘉尔',d:'慵懒男声'},
+  {g:'方言',id:'404000',n:'云佳妍（广）',d:'广东话亲和女声'},
+  {g:'方言',id:'404001',n:'云阿仁（广）',d:'广东话男声'},
+  {g:'方言',id:'404002',n:'云佳妍（港）',d:'香港粤语亲和女声'}];
+/* 各身份的默认音色：馆员用讲解同款，家长用温柔女声，祖辈用吐字清楚的沉稳女老师，孩子用女童声 */
+const ROLE_VOICE={librarian:'403011',parent:'402001',elder:'403005',child:'403000'};
+const QUICK_VOICES=['403011','402001','403005','403010','403000','403008'];
+const voiceName=id=>{const v=VOICES.find(x=>x.id===String(id));return v?v.n:'音色 '+id;};
+const VOICE_DEMO='月亮升起来了。小狐狸踮起脚尖，轻轻地说：“晚安，森林。”';
+function saveTts(){try{localStorage.setItem('thf-tts',JSON.stringify({voice:S.cfg.tts.voice,speed:S.cfg.tts.speed,engine:S.cfg.tts.engine,picked:!!S.ui.voicePicked}));}catch(e){}}
+function pickVoice(id,demo){const auto=S.step==='read'&&S.reader.auto;stopSay();S.cfg.tts.voice=String(id);S.ui.voicePicked=true;saveTts();render();if(auto){S.reader.auto=true;readAloud();}else if(demo)say(VOICE_DEMO);}
+/* 腾讯云语音：每次最多 150 字，按句切成 140 字以内的段，边播边取下一段，听过的缓存起来不重复计费 */
+const ttsCloud=()=>!!(BK&&BK.tts&&S.cfg.tts.engine==='tencent');
+const voiceOK=()=>ttsCloud()||!!CAP.tts||('speechSynthesis' in window);
+const TTS_CACHE=new Map();let ttsGen=0,curAudio=null;
+function ttsChunks(t){t=String(t||'').replace(/\s+/g,' ').trim();const out=[];let cur='';
+  for(const s of t.split(/(?<=[。！？；!?…])/)){if((cur+s).length<=140)cur+=s;else{if(cur.trim())out.push(cur);let x=s;while(x.length>140){out.push(x.slice(0,140));x=x.slice(140);}cur=x;}}
+  if(cur.trim())out.push(cur);return out;}
+function ttsSpeed(){const v=+S.cfg.tts.speed||0;return S.role==='elder'?Math.min(v,-1):v;}
+function ttsFetch(text){const k=S.cfg.tts.voice+'|'+ttsSpeed()+'|'+text;if(TTS_CACHE.has(k))return TTS_CACHE.get(k);
+  const p=(async()=>{let r;try{r=await fetch(API+'/api/tts',{method:'POST',headers:hdr(),body:JSON.stringify({text,voice:+S.cfg.tts.voice||403011,speed:ttsSpeed()})});}catch(e){throw{code:'network'};}
+    if(!r.ok)throw await httpErr(r);const j=await r.json(),R=j.Response||j;
+    if(R.Error)throw{code:'tts',message:(R.Error.Code||'')+' '+(R.Error.Message||'')};if(!R.Audio)throw{code:'tts',message:'没有返回音频'};
+    return 'data:audio/mpeg;base64,'+R.Audio;})();
+  p.catch(()=>TTS_CACHE.delete(k));TTS_CACHE.set(k,p);if(TTS_CACHE.size>120)TTS_CACHE.delete(TTS_CACHE.keys().next().value);return p;}
+async function cloudSay(t,done){const g=++ttsGen,parts=ttsChunks(t);if(!parts.length){done&&done(false);return;}
+  try{let next=ttsFetch(parts[0]);
+    for(let i=0;i<parts.length;i++){const url=await next;if(g!==ttsGen)return;if(i+1<parts.length)next=ttsFetch(parts[i+1]);
+      await new Promise((res,rej)=>{const a=new Audio(url);curAudio=a;a.onended=res;a._stop=res;a.onerror=()=>rej({code:'tts',message:'播放失败'});const pr=a.play();if(pr&&pr.catch)pr.catch(rej);});
+      if(g!==ttsGen)return;}
+    S.ui.ttsErr='';done&&done(true);}
+  catch(e){if(g!==ttsGen)return;S.ui.ttsErr=e&&e.code==='tts'?'腾讯云语音：'+e.message:emsg(e);render();done&&done(false);}}
+function stopSay(){ttsGen++;if(curAudio){try{curAudio.pause();curAudio._stop&&curAudio._stop();}catch(e){}curAudio=null;}
+  try{if(CAP.tts)CAP.tts.stop();else if('speechSynthesis' in window)speechSynthesis.cancel();}catch(e){}}
+function say(t,done){if(!t||!voiceOK()){done&&done(false);return;}
+  if(ttsCloud()){stopSay();cloudSay(String(t),done);return;}
+  const rate=S.role==='elder'?0.85:1;
+  if(CAP.tts){CAP.tts.speak(String(t).slice(0,1900),{language:'zh-CN',rate}).then(()=>done&&done(true)).catch(()=>done&&done(false));}
+  else{try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='zh-CN';u.rate=rate;u.onend=()=>done&&done(true);u.onerror=()=>done&&done(false);speechSynthesis.speak(u);}catch(e){done&&done(false);}}}
+function speaker(text,label){if(!voiceOK())return null;return h('button',{class:'btn ghost sm',type:'button',onclick:()=>say(typeof text==='function'?text():text)},'🔊 '+(label||'听一听'));}
+
+function agSet(id,patch){S.ag[id]=Object.assign(S.ag[id]||{run:0},patch);}
+function agProg(id,n){agSet(id,{chars:n});document.querySelectorAll('[data-prog="'+id+'"]').forEach(x=>x.textContent='已写 '+n+' 字');}
+async function llm(agent,input,o={}){
+  const cfg=S.cfg.text,ctl=new AbortController();CTLS.add(ctl);
+  try{
+    const E=eff('text');
+    if(E==='deepseek'||E==='proxy'){
+      if(E==='deepseek'&&!cfg.key)throw{code:'no_key'};
+      const messages=typeof input==='string'?[{role:'user',content:input}]:input;let r;
+      try{r=await fetch(E==='proxy'?API+'/api/deepseek/chat/completions':cfg.endpoint.replace(/\/$/,'')+'/chat/completions',{method:'POST',signal:ctl.signal,headers:E==='proxy'?hdr():{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},body:JSON.stringify(Object.assign({model:o.model||cfg.model,messages,stream:false},o.json?{response_format:{type:'json_object'}}:{},o.temp?{temperature:o.temp}:{}))});}
+      catch(e){throw{code:ctl.signal.aborted?'cancelled':'network'};}
+      if(!r.ok)throw await httpErr(r);
+      const j=await r.json();return (j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||'';
+    }
+    if(!CAP.sample)throw{code:'no_engine'};
+    const opts={signal:ctl.signal,modelTier:o.tier||'default',onText:({text})=>agProg(agent,text.length)};
+    if(o.fresh)opts.cache=false;
+    const res=await CAP.sample(input,opts);return res.text;
+  }finally{CTLS.delete(ctl);}
+}
+function parseJSON(t){t=String(t).trim();const f=t.match(/```(?:json)?\s*([\s\S]*?)```/);if(f)t=f[1].trim();
+  try{return JSON.parse(t);}catch(e){}
+  const a=t.search(/[\[{]/),b=Math.max(t.lastIndexOf('}'),t.lastIndexOf(']'));
+  if(a>=0&&b>a){try{return JSON.parse(t.slice(a,b+1));}catch(e){}}
+  throw{code:'invalid_json'};}
+async function agent(id,prompt,o={}){
+  const cur=S.ag[id]||{run:0};agSet(id,{run:cur.run+1,st:'run',chars:0,prompt:typeof prompt==='string'?prompt:prompt.map(m=>m.role+'：'+m.content).join('\n\n'),note:''});render();
+  try{const t=await llm(id,prompt,o);const out=o.json?parseJSON(t):t;agSet(id,{run:S.ag[id].run-1,st:'done'});return out;}
+  catch(e){agSet(id,{run:S.ag[id].run-1,st:e&&e.code==='cancelled'?'idle':'err',note:emsg(e)});throw e;}
+}
+function stopAll(){for(const c of CTLS)c.abort();if(S.art.batch)S.art.batch.stop=true;stopSay();S.reader.auto=false;}
+function engineOK(kind){
+  const c=S.cfg[kind||'text'];
+  if(eff(kind||'text')==='proxy'){
+    if(BK.needCode&&!S.ui.codeOk){S.err='请先在首页输入访问码。';render();return false;}
+    if(!(kind==='image'?imgReady():BK.text)){S.err=BK.mode==='local'?ERR.no_key:'服务器还没有配置'+(kind==='image'?' '+imgName():' DeepSeek')+' 密钥，请联系管理员。';render();return false;}
+    return true;}
+  if(eff(kind||'text')==='builtin'){if(!CAP.sample){S.err=CAP.checked?ERR.no_engine:'正在连接模型，请过几秒再点一次。';render();return false;}}
+  else if(kind==='image'?!imgReady():!c.key){S.err=ERR.no_key;render();return false;}
+  return true;}
+
+/* ========== 提示词 ========== */
+const ROLE_BRIEF={
+  librarian:n=>'用于公共图书馆'+(n.actType||'儿童阅读推广活动')+(n.group?'，规模：'+n.group:'')+(n.actTheme?'，活动主题：'+n.actTheme:'')+'。文字要适合馆员当众朗读，有能带动孩子集体回应的重复句或提问点；知识点准确，能衔接馆藏主题。',
+  parent:n=>'用于家庭亲子共读'+(n.minutes?'，一次约 '+n.minutes:'')+'。贴近孩子的日常'+(n.concern?'，温和地回应家长关心的事：'+n.concern+'（不要说教）':'')+'。',
+  elder:n=>'由祖辈陪读'+(n.elderMode?'（方式：'+n.elderMode+'）':'')+'。句子口语化、朗朗上口，方便老人朗读或机器朗读；体现祖孙温情，不用网络新词。'+(n.oldTale&&n.oldTale!=='不用'?'老故事元素：'+n.oldTale+'。':''),
+  child:n=>'由孩子自己发起创作，孩子的想法优先。语言活泼，让孩子觉得“这是我做的书”。'
+};
+function heroLine(){const n=S.needs,nm=n.heroName||'',g=n.gender==='不指定'?'不强调性别':n.gender,me=n.nick||'宝宝';
+  switch(n.hero){
+    case '孩子本人':return '唯一主角是小读者本人（'+g+'，名字用“'+(nm||me)+'”），外形是普通孩子，不要写成动物。';
+    case '孩子和动物朋友一起':return '双主角：小读者本人（'+g+'，名字用“'+me+'”）和一位动物朋友'+(nm?'（名叫“'+nm+'”）':'')+'，动物从兴趣里选。';
+    case '喜欢的动物或事物':return '唯一主角是孩子喜欢的动物或事物（从兴趣里选一个并拟人化）'+(nm?'，名叫“'+nm+'”':'')+'；小读者本人不出场。';
+    case '一个原创的新角色':return '唯一主角是一个原创的新角色'+(nm?'，名叫“'+nm+'”':'')+'；小读者本人不出场。';
+    case '':return '主角由策划根据兴趣决定，只能有一个明确的主角'+(nm?'，名叫“'+nm+'”':'')+'。';
+    default:return '主角：'+n.hero+(nm?'，名叫“'+nm+'”':'')+'。';}}
+/* 选项之间的矛盾核对：m 给人看，r 是写进提示词的处理规则，fix 是一键修正 */
+function conflicts(){const n=S.needs,c=[],subs=[].concat(...Object.values(n.interests)),inI=k=>k in n.interests;
+  if(n.band==='0-3'&&/认字|独立/.test(n.how))c.push({m:'年龄是 0—3 岁，阅读方式却选了“'+n.how+'”，两者对不上。',r:'按 0—3 岁、大人读给孩子听来写',fix:['改为“大人读给孩子听”',()=>setNeed('how','大人读给孩子听')]});
+  if(S.role==='librarian'&&/小组|集体/.test(n.group)&&/^孩子/.test(n.hero))c.push({m:'活动是多人参加，主角却设成某一个孩子本人，其他孩子不好代入。',r:'主角改为所有孩子都能代入的原创角色',fix:['主角改为原创新角色',()=>setNeed('hero','一个原创的新角色')]});
+  if(/^孩子/.test(n.hero)&&!n.nick&&!n.heroName)c.push({m:'主角是孩子本人，但没有填小名，故事里会叫“宝宝”。',fix:null});
+  if(n.hero==='孩子本人'&&n.nick&&n.heroName&&n.heroName!==n.nick)c.push({m:'主角是孩子本人，小名是“'+n.nick+'”，主角名却填了“'+n.heroName+'”。',r:'主角名以“'+n.heroName+'”为准',fix:['主角名改用小名',()=>setNeed('heroName',n.nick)]});
+  if(/动物/.test(n.hero)&&!(inI('animal')||inI('dino')||inI('ocean')))c.push({m:'主角里有动物，但兴趣没有选动物、恐龙或海洋，故事策划会自己挑一种。',fix:null});
+  if(n.when==='睡前'&&n.tone==='冒险的')c.push({m:'睡前读冒险故事容易兴奋。',r:'保留冒险，但最后两页节奏放缓，落在安静入睡',fix:['基调改为“温暖的”',()=>setNeed('tone','温暖的')]});
+  if(n.when==='睡前'&&n.ending==='留一个小悬念')c.push({m:'睡前留悬念，孩子可能惦记着不肯睡。',r:'悬念要轻，最后一句落在安心',fix:['结尾改为“回到睡觉或回家”',()=>setNeed('ending','回到睡觉或回家')]});
+  if(n.langStyle==='儿歌一样押韵'&&n.density==='more')c.push({m:'押韵的儿歌体适合短句，和“文字多一些”冲突。',r:'以押韵短句为准',fix:['文字量改回按年龄推荐',()=>setNeed('density','')]});
+  if(n.band==='0-3'&&pagesN()>=10)c.push({m:'0—3 岁孩子专注时间短，'+pagesN()+' 页偏长。',fix:['改为 6 页',()=>setNeed('pages','6')]});
+  if(pagesN()>=10&&n.minutes==='5 分钟')c.push({m:'选了 '+pagesN()+' 页，但一次只读 5 分钟，可能读不完。',fix:['改为 6 页',()=>setNeed('pages','6')]});
+  const hit=(a,ok,what)=>{if(n.avoid.includes(a)&&ok)c.push({m:'要避开“'+a+'”，但又选了'+what+'。',r:'可以出现'+what+'，但写得可爱、明亮，不制造害怕',fix:['取消避开“'+a+'”',()=>setNeed('avoid',n.avoid.filter(x=>x!==a))]});};
+  hit('虫子',subs.includes('昆虫'),'昆虫');hit('怪物',subs.includes('霸王龙'),'霸王龙');hit('黑暗',inI('space')||n.place==='太空','太空题材');hit('高处',subs.includes('飞机')||subs.includes('火箭'),'飞机或火箭');hit('打针看病',/看病|医院|打针/.test(n.concern+n.crush+n.custom),'看病的情节');
+  if(n.avoid.includes('和家人分开')&&/^(喜欢的|一个原创)/.test(n.hero)===false&&n.family.length===0&&/幼儿园/.test(n.concern))c.push({m:'想缓解上幼儿园的分离，却又要避开“和家人分开”。',r:'写短暂分开后重聚，重点放在重聚',fix:null});
+  if(/机器朗读/.test(n.elderMode)&&!voiceOK())c.push({m:'选了机器朗读，但这台设备不支持朗读，换电脑浏览器打开才能听。',fix:null});
+  return c;}
+function brief(){const n=S.needs,b=band(),L=[];
+  L.push('【制作者】'+ROLES[S.role].name+'。'+ROLE_BRIEF[S.role](n));
+  L.push('【小读者】'+(n.nick?'小名：'+n.nick+'；':'')+'年龄段：'+b.label+'；性别：'+n.gender);
+  if(n.how)L.push('【孩子现在怎么读】'+n.how);
+  if(n.when)L.push('【通常什么时候读】'+n.when);
+  L.push('【兴趣】'+Object.entries(n.interests).map(([k,v])=>INT[k].label+(v.length?'（具体喜欢：'+v.join('、')+'）':'')).join('；'));
+  if(n.crush)L.push('【最近着迷】'+n.crush);
+  L.push('【主角设定】'+heroLine());
+  if(n.tone)L.push('【故事基调】'+n.tone);
+  if(n.place)L.push('【故事发生地】'+n.place);
+  if(n.family.length)L.push('【一起出场的人】'+n.family.join('、')+'（配角，不抢主角的戏）');
+  if(n.goals.length)L.push('【希望这本书带来】'+n.goals.join('、'));
+  if(n.engage.length)L.push('【互动方式】'+n.engage.join('；'));
+  if(n.avoid.length)L.push('【必须避开】'+n.avoid.join('、'));
+  if(n.langStyle)L.push('【语言风格】'+n.langStyle);
+  if(n.ending)L.push('【结尾方式】'+n.ending);
+  if(n.custom)L.push('【其他要求】'+n.custom);
+  const c=cr();L.push('【分级框定】正文 '+pagesN()+' 页（不含封面）；每页 '+c[0]+'—'+c[1]+' 个汉字；语言：'+b.lang);
+  const rules=conflicts().filter(x=>x.r).map(x=>x.r);if(rules.length)L.push('【选项有冲突时的处理】'+rules.join('；'));
+  return L.join('\n');}
+function pOutline(prev,fb){return '【任务:outline】你是公共图书馆儿童绘本项目的「故事策划」智能体。请根据下面采集到的需求，归纳出一本原创绘本的梗概。\n\n'+brief()+'\n\n【创作约束】\n'+S.cons.planner+'\n'+SAFETY+
+  (prev?'\n\n【上一版梗概】'+JSON.stringify(prev.d)+'\n【用户评价】'+(prev.rating?prev.rating+' 星（满分 5）':'未打分')+'。意见：'+(fb||'想换一个新的故事')+'\n请根据意见改写；没有被批评的优点可以保留。':'')+
+  '\n\n'+CRAFT+'\n\n只输出一个 JSON 对象，不要任何其他文字。格式：\n{"title":"书名，不超过12个字，有画面感","logline":"一句话主线","heart":"故事核：主角真正想要的一件具体的小事，或遇到的一个具体的小麻烦","arc":"情感弧线：用→连接 4—5 个情绪点","refrain":"一句不超过12个字、孩子能跟着念的反复句","motif":"贯穿全书、首尾呼应的一个具体意象（一样东西、一种声音或一种颜色）","synopsis":"梗概，120字以内","theme":"想传递的东西（不写进正文）","knowledge":["知识点"],"characters":[{"name":"名字","kind":"是什么","look":"外形：体型、各部位的颜色、服饰、一眼能认出的标志物，写具体","trait":"性格"}],"beats":["第1页：发生什么（翻页钩子：……）","第2页：……"],"why":"这本书为什么适合这位小读者，对照需求说"}\n要求：characters 最多 3 个；beats 的条数必须正好是 '+pagesN()+' 条。';}
+const CRAFT='【大师级儿童绘本写作守则】\n'+
+'1. 图文分工：文字只写画面画不出来的东西——声音、心里话、时间的流逝、对话、气味和温度；画面里一眼能看到的颜色、样子、动作，不要再用文字描述一遍。\n'+
+'2. 一页一个节拍：每页只推进一小步。每页最后一句给读者一个“翻页的理由”：一个问题、一个停顿、半句话或一点悬念。\n'+
+'3. 好听、好读：写给耳朵听，大声读出来要顺口。长短句交替，短句为主，节奏像呼吸一样有起伏。叠词和拟声词点到为止；押韵可以有，绝不为押韵硬凑。\n'+
+'4. 重复与变奏：用一句简短好记的反复句贯穿全书，出现三次左右，最后一次要有变化或反转；情节可用“三次尝试”结构，每次比上次多走一步。\n'+
+'5. 具体胜过抽象：用孩子摸得着、听得见的具体名词和有力的动词。少用形容词，不堆成语，不用“非常”“十分”“美丽的”“开心极了”这类空泛的词，不用书面腔和网络语。\n'+
+'6. 写动作，不贴标签：不说“他很害怕”，写他做了什么（把耳朵压低，往妈妈身后躲）。情感克制，留给孩子自己体会。\n'+
+'7. 孩子的眼睛：用孩子的逻辑看世界，允许天真的误会和小小的幽默；不让大人出面解决问题，让主角自己想办法。\n'+
+'8. 不说教：不许出现“我们要……”“这告诉我们……”“从此以后再也不……了”“明白了一个道理”之类的总结句；道理藏在情节和画面里。\n'+
+'9. 知识长在故事里：知识点由角色亲眼发现、亲手试出来，用一句话自然带出，不讲课。\n'+
+'10. 结尾有余味：安静落地，或回到开头的意象，与第一页遥相呼应；最后一句要短，留一点空白。\n'+
+'按年龄取用：0—4 岁以节奏、重复、拟声为主，几乎不用对话；6 岁以上可以有更多对话、心理活动和小幽默。';
+const CRAFT_EX='【示范（只学方法，不要照抄句子）】\n'+
+'平庸：小兔子很害怕，它不敢一个人走进黑黑的森林。妈妈告诉它要勇敢。\n'+
+'更好：森林黑乎乎的。小兔子把耳朵竖起来，又放下去。“咚、咚、咚。”是谁在敲门？哦，是它自己的心。\n'+
+'平庸：小狐狸种下了种子，每天浇水，种子终于发芽了，它非常开心。\n'+
+'更好：第一天，土是平的。第二天，土还是平的。第三天——土里悄悄顶出一点绿。';
+const INTERACT={librarian:'面向一群孩子的提问或带动作的口令',parent:'亲子之间的一句提问',elder:'祖辈能随口说出的家常话',child:'直接对孩子说的小任务（找一找、学一学）'};
+function pStory(fb){const b={chars:cr()},d=S.outline.d;return '【任务:story】你是「故事作家」智能体，一位写过许多经典图画书的儿童文学作家。请把下面已经由用户确认的梗概，写成逐页的绘本文字。动笔前先在心里把全书大声读一遍，想好节奏的起伏，再一页一页写。\n\n'+brief()+'\n\n【已确认的梗概】\n'+JSON.stringify(d)+
+  (d.refrain?'\n【反复句】“'+d.refrain+'”——在关键页出现三次左右，最后一次要有变化。':'')+(d.motif?'\n【核心意象】'+d.motif+'——第一页出现，最后一页呼应。':'')+
+  '\n\n'+CRAFT+'\n\n'+CRAFT_EX+'\n\n【创作约束】\n'+S.cons.writer+'\n'+SAFETY+(fb?'\n\n【用户对上一稿的意见】'+fb:'')+
+  '\n\n只输出一个 JSON 对象，不要任何其他文字。格式：\n{"pages":[{"n":1,"text":"印在书上的文字","scene":"这一页画面里有什么、角色在做什么（写给画师）","interact":"给陪读人的一句互动提示"}]}\n要求：pages 正好 '+pagesN()+' 条；每页 text 为 '+b.chars[0]+'—'+b.chars[1]+' 个汉字；scene 写清画面而不是复述 text；interact 的口吻是：'+INTERACT[S.role]+'，不要重复正文。';}
+function pEdit(pages){const b={chars:cr()},d=S.outline.d;return '【任务:edit】你是「文学编辑」智能体，资深儿童图画书编辑。下面是故事作家的初稿。请把它当作即将出版的绘本：先逐页大声朗读，标出不顺口、不具体、不好听的地方，再动笔修改。\n\n'+brief()+
+  '\n\n【梗概要点】故事核：'+(d.heart||d.logline||'')+'；情感弧线：'+(d.arc||'')+'；反复句：'+(d.refrain||'无')+'；核心意象：'+(d.motif||'无')+
+  '\n【初稿】\n'+JSON.stringify(pages.map(p=>({n:p.n,text:p.text})))+'\n\n'+CRAFT+'\n\n【编辑约束】\n'+S.cons.editor+'\n'+SAFETY+
+  '\n\n修改规则：\n1. 页数、情节顺序、每页发生的事和知识点都不变；只改写句子，不新增情节和角色。\n2. 每页 text 仍为 '+b.chars[0]+'—'+b.chars[1]+' 个汉字。\n3. 重点改：念起来拗口或节奏平的句子；书面腔、空泛形容词、成语堆砌；说教句和总结句；重复啰嗦的词；画面能看到却还在描述的内容。\n4. 重点强化：反复句在关键页出现、最后一次变奏；首尾意象呼应；每页结尾的翻页钩子；最后一句短而有余味。\n5. 已经写得好的句子保持原样。\n\n只输出一个 JSON 对象，不要任何其他文字。格式：\n{"pages":[{"n":1,"text":"修改后的整页文字"}],"notes":["改了什么、为什么，每条不超过30字，最多4条"]}\npages 正好 '+pages.length+' 条。';}
+const storyJSON=()=>JSON.stringify(S.story.pages.map(p=>({n:p.n,text:p.text,scene:p.scene})));
+function pReview(){const b=band();return '【任务:review】你是「适龄审校」智能体。请审校下面这本给 '+b.label+' 孩子的绘本文字。\n\n'+brief()+'\n\n【绘本文字】\n'+storyJSON()+'\n\n【审校约束】\n'+S.cons.reviewer+'\n'+SAFETY+
+  '\n\n只输出一个 JSON 对象，不要任何其他文字。格式：\n{"score":4,"summary":"一句话结论","checks":[{"item":"字数与句长","ok":true,"note":"说明"},{"item":"用词适龄","ok":true,"note":""},{"item":"知识准确","ok":true,"note":""},{"item":"安全与价值观","ok":true,"note":""},{"item":"需求契合","ok":true,"note":""}],"fixes":[{"n":3,"problem":"哪里有问题","text":"改好的整页文字"}]}\nscore 是 1 到 5 的整数；没有问题时 fixes 为空数组。';}
+function pShots(){return '【任务:shots】你是「分镜导演」智能体。请为下面这本绘本的每一页设计镜头，让整本书的画面有远有近、有不同视角，同时角色保持一致。\n\n【角色】'+JSON.stringify(S.outline.d.characters)+'\n【逐页内容】\n'+storyJSON()+'\n\n【分镜约束】\n'+S.cons.director+
+  '\n\n只输出一个 JSON 对象，不要任何其他文字。格式：\n{"shots":[{"n":1,"shot":"远景","angle":"平视","action":"角色的站位、动作、朝向和表情","bg":"背景、时间和光线"}]}\nshot 只能是：远景、全景、中景、近景、特写；angle 只能是：平视、俯视、仰视、侧面、背后。shots 正好 '+S.story.pages.length+' 条。';}
+const GUIDE_ROLE={librarian:'activity 写成一场约 30 分钟活动的方案，steps 分导入、共读、延伸三段，写清馆员说什么、做什么；tips 写带一群孩子共读时的控场要点；keywords 给 4—6 个馆藏检索主题词。',parent:'activity 是一个 10 分钟内在家就能做的亲子小游戏；tips 是 3 条陪读提示。',elder:'tips 用大白话，每条不超过 20 个字；activity 是祖孙一起做的一件家常小事；questions 的问法要像聊家常。',child:'questions 直接对孩子发问，用词简单；activity 是孩子自己能完成的小挑战；tips 为空数组。'};
+function pGuide(){return '【任务:guide】你是「导读馆员」智能体。请为下面这本绘本设计读后内容。\n\n'+brief()+'\n\n【书名】'+S.story.title+'\n【知识点】'+(S.outline.d.knowledge||[]).join('、')+'\n【绘本文字】\n'+S.story.pages.map(p=>p.n+'. '+p.text).join('\n')+'\n\n【导读约束】\n'+S.cons.guide+'\n'+GUIDE_ROLE[S.role]+
+  '\n\n只输出一个 JSON 对象，不要任何其他文字。格式：\n{"questions":[{"level":"回忆","q":"问题"}],"tips":["提示"],"activity":{"name":"活动名","steps":["步骤"],"materials":["材料"]},"keywords":["主题词"]}';}
+function chatRules(){return '你是绘本《'+S.story.title+'》的领读伙伴，正在和一位 '+band().label+' 的孩子或陪读的大人聊这本书。\n绘本全文：\n'+S.story.pages.map(p=>p.n+'. '+p.text).join('\n')+'\n规则：每次回答不超过 3 句，口语化，多鼓励；可以反问一个小问题；只聊这本书和相关的知识；不询问姓名、住址、学校等个人信息；知识要准确，不确定就说“我们可以去图书馆查一查”。';}
+function charText(){return (S.outline.d.characters||[]).map((c,i)=>'c'+(i+1)+' '+c.name+'（'+c.kind+'）：'+c.look+'；性格：'+c.trait).join('\n');}
+function styleLine(){const s=curStyle(),p=curPal(),a=S.art;return '画风：'+s.prompt+'。'+(a.customStyle?'\n补充画风要求：'+a.customStyle+'。':'')+(a.mood?'\n画面氛围：'+a.mood+'。':'')+(a.note?'\n全书画面的其他要求：'+a.note+'。':'')+'\n色调「'+p.name+'」：只使用这组颜色和它们的深浅变化：'+p.c.join('、')+'（依次是底色、亮色、主角色、次色、强调色、深色）。';}
+function pSheet(){return '【任务:sheet】你是「角色设计师」智能体。请用 SVG 代码画一张角色定妆图。只输出一个完整的 <svg>…</svg>，不要解释，不要代码围栏。\n\n画布：viewBox="0 0 600 320"，浅色纯色背景。把下面每个角色画成全身站姿，并排摆放，互不重叠，每个角色放在各自的 <g id="c1">、<g id="c2"> 里。\n【角色】\n'+charText()+'\n'+styleLine()+'\n【设计约束】\n'+S.cons.designer+'\n硬性要求：不出现任何文字；不使用 <text>、<image>、<script>、<foreignObject>、<style> 和外部链接；五官清楚、表情友好；所有标签闭合；总长度不超过 4500 个字符。';}
+function pageSpec(i){const s=S.story;if(i===0){const names=(S.outline.d.characters||[]).map(c=>c.name).join('、');return {scene:'封面。'+names+'在这个故事的主要场景里，面向读者，有欢迎读者的感觉。画面上方约四分之一保持简洁（天空或纯色），用来叠放书名，不要自己写字。',text:'书名：'+s.title,shot:'全景',angle:'平视',action:'',bg:'',prev:''};}
+  const p=s.pages[i-1],q=s.pages[i-2];return {scene:p.scene,text:p.text,shot:p.shot||'全景',angle:p.angle||'平视',action:p.action,bg:p.bg,prev:q?(q.shot+'、'+q.angle):''};}
+function pPaint(i,note){const sp=pageSpec(i),r=RATIOS[S.art.ratio],fine=S.art.detail==='fine',sh=S.art.sheet;
+  return '【任务:illustrate】你是「插画师」智能体。请用 SVG 代码画一页儿童绘本插图。只输出一个完整的 <svg>…</svg>，不要解释，不要代码围栏。\n\n画布：viewBox="0 0 '+r[0]+' '+r[1]+'"，背景必须铺满整个画布。\n'+styleLine()+'\n精细度：'+(fine?'精细——背景有 3 层以上，加入花草、云、小物件等点缀':'标准——形状简洁，背景 2—3 层')+
+  '\n\n【本页画面】'+sp.scene+'\n【本页文字】（只用来理解情节，不要画进图里）'+sp.text+
+  '\n【景别】'+sp.shot+'——'+SHOTS[sp.shot]+'\n【视角】'+sp.angle+'——'+ANGLES[sp.angle]+(sp.action?'\n【站位与动作】'+sp.action:'')+(sp.bg?'\n【背景与光线】'+sp.bg:'')+(sp.prev?'\n【上一页的镜头】'+sp.prev+'。这一页的远近和角色站位必须和上一页不同。':'')+
+  '\n\n【角色定妆】每一页都必须保持同样的配色、体型比例和标志物；姿势、朝向、表情按本页情节重新画，不要照搬定妆图的站姿。\n'+charText()+(sh&&sh.st==='ok'&&sh.clean?'\n【定妆图 SVG，供参照造型与配色】\n'+('<svg viewBox="'+sh.clean.vb+'">'+sh.clean.inner+'</svg>').slice(0,6000):'')+
+  '\n\n【绘画约束】\n'+S.cons.painter+'\n硬性要求：\n1. 不出现任何文字、字母、数字、水印；不使用 <text>、<image>、<script>、<foreignObject>、<style> 和外部链接。\n2. 分层绘制：远处背景 → 中景 → 角色 → 前景点缀，前后有遮挡，画面有纵深。\n3. 角色有清楚的眼睛、嘴和动作，表情符合情节。\n4. 温暖、安全，适合儿童。\n5. 所有标签闭合，总长度不超过 '+(fine?11000:7000)+' 个字符。'+(note?'\n\n【用户对上一版这页图的意见】'+note:'');}
+function t2iStyle(){const a=S.art;return curStyle().t2i+(a.customStyle?'，'+a.customStyle:'')+'，'+curPal().name+'色调（'+PD[curPal().id]+'）'+(a.mood?'，氛围'+a.mood:'')+(a.note?'，'+a.note:'');}
+const bible=()=>(S.outline.d.characters||[]).map(c=>c.name+'（'+c.kind+'）：'+c.look).join('；');
+const cut=(t,n)=>{t=String(t||'');return t.length>n?t.slice(0,n)+'…':t;};
+/* MiniMax：每页重复一字不改的角色设定和画风，靠文字锁定一致性 */
+function t2iPrompt(i,note){const sp=pageSpec(i);return '同一本儿童绘本中的一页插画，全书角色形象和画风必须统一。【角色设定，每页相同】'+bible()+'。【画风，每页相同】'+t2iStyle()+'。【本页画面】'+cut(sp.scene,160)+(sp.action?' '+cut(sp.action,80):'')+(sp.bg?' '+cut(sp.bg,60):'')+'。【镜头】'+sp.shot+'（'+SHOTS[sp.shot]+'），'+sp.angle+'（'+ANGLES[sp.angle]+'）。'+(note?'【修改要求】'+note+'。':'')+'角色的毛色、服饰、配色和标志物与设定完全一致，不要增减。适合儿童，温暖安全。画面中不要出现任何文字、字母和水印。';}
+function sheetT2I(){const c=(S.outline.d.characters||[])[0]||{name:'主角',kind:'',look:''};return '儿童绘本角色设定图，'+t2iStyle()+'。只画一个角色：'+c.name+'，'+c.kind+'，'+c.look+'。全身，正面站立，表情友好，纯白背景。画面中不要出现任何文字。';}
+/* Seedream：图1 定妆三视图锁造型，图2 已定稿的第 1 页锁画风 */
+function sdSheetPrompt(){return '儿童绘本角色设定图（三视图），'+t2iStyle()+'。画出本书全部角色：'+bible()+'。每个角色都画正面、侧面、背面三个全身视图，并排站在纯白背景上，比例统一，五官清楚，表情友好，配色和标志物清晰可辨。画面中不要出现任何文字、标签和水印。';}
+function sdPagePrompt(i,note,nref){const sp=pageSpec(i);
+  return '儿童绘本插画。'+(nref?'图1是本书的角色设定图'+(nref>1?'，图2是本书已定稿的一页插图':'')+'。画面中每个角色的长相、体型比例、颜色、服饰和标志物必须与图1完全一致'+(nref>1?'，画风、笔触、用色和光影与图2保持一致':'')+'；只改变姿势、表情、朝向和场景，不要照搬设定图的站姿和白色背景。':'')+
+  '角色：'+cut(bible(),160)+'。本页画面：'+cut(sp.scene,140)+(sp.action?' '+cut(sp.action,70):'')+(sp.bg?' '+cut(sp.bg,50):'')+'。镜头：'+sp.shot+'，'+SHOTS[sp.shot]+'；'+sp.angle+'，'+ANGLES[sp.angle]+'。画风：'+t2iStyle()+'。'+(note?'修改要求：'+note+'。':'')+'温暖安全，适合儿童；画面中不要出现任何文字、字母、对话框和水印。';}
+const SD_SIZE={'4:3':'1472x1104','1:1':'1280x1280','3:4':'1104x1472'};
+const SD_SIZE_HI={'4:3':'2304x1728','1:1':'2048x2048','3:4':'1728x2304'};
+const sdSize=r=>(/5-5|4-5/.test(S.cfg.ark.model)?SD_SIZE_HI:SD_SIZE)[r]||SD_SIZE['4:3'];
+/* 把参考图缩到 768 像素再上传，请求更小更快 */
+function shrink(src,max){max=max||768;return new Promise(res=>{if(!/^data:image/.test(src||''))return res(src);const im=new Image();
+  im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));c.getContext('2d').drawImage(im,0,0,c.width,c.height);try{res(c.toDataURL('image/jpeg',0.85));}catch(e){res(src);}};
+  im.onerror=()=>res(src);im.src=src;});}
+
+/* ========== SVG 处理与画风套件 ========== */
+function kitDefs(k){let d='';
+  if(k.disp||k.blur||k.sat){d+='<filter id="sk-main" x="-3%" y="-3%" width="106%" height="106%">';
+    if(k.disp)d+='<feTurbulence type="fractalNoise" baseFrequency="'+k.disp[0]+'" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="'+k.disp[1]+'" xChannelSelector="R" yChannelSelector="G"/>';
+    if(k.blur)d+='<feGaussianBlur stdDeviation="'+k.blur+'"/>';
+    if(k.sat)d+='<feColorMatrix type="saturate" values="'+k.sat+'"/>';
+    d+='</filter>';}
+  const s=k.shadow||[3,2,0.2];
+  d+='<filter id="sk-shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="'+s[0]+'" stdDeviation="'+s[1]+'" flood-color="#000" flood-opacity="'+s[2]+'"/></filter>';
+  if(k.grain)d+='<filter id="sk-grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="2"/><feColorMatrix type="saturate" values="0"/></filter>';
+  return d;}
+function wrapSvg(vb,inner,k){const main=k.disp||k.blur||k.sat;
+  return '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="'+vb+'"><defs>'+kitDefs(k)+'</defs><rect width="100%" height="100%" fill="#fff"/><g'+(main?' filter="url(#sk-main)"':'')+'>'+inner+'</g>'+(k.grain?'<rect width="100%" height="100%" filter="url(#sk-grain)" opacity="'+k.grain+'" style="mix-blend-mode:multiply"/>':'')+'</svg>';}
+const toData=svg=>'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+function cleanSvg(t){t=String(t);const i=t.indexOf('<svg'),j=t.lastIndexOf('</svg>');if(i<0||j<i)return null;
+  let s=t.slice(i,j+6);
+  if(!/^<svg[^>]*\sxmlns=/.test(s))s=s.replace(/^<svg/,'<svg xmlns="http://www.w3.org/2000/svg"');
+  if(/xlink:/.test(s)&&!/^<svg[^>]*xmlns:xlink=/.test(s))s=s.replace(/^<svg/,'<svg xmlns:xlink="http://www.w3.org/1999/xlink"');
+  const doc=new DOMParser().parseFromString(s,'image/svg+xml'),root=doc.documentElement;
+  if(doc.querySelector('parsererror')||!root||root.localName!=='svg')return null;
+  root.querySelectorAll('script,foreignObject,image,iframe,a,style,text,animate,animateTransform,animateMotion,set').forEach(n=>n.remove());
+  root.querySelectorAll('*').forEach(n=>{for(const a of Array.from(n.attributes)){const nm=a.name.toLowerCase();
+    if(nm.startsWith('on'))n.removeAttribute(a.name);
+    else if((nm==='href'||nm==='xlink:href')&&!a.value.trim().startsWith('#'))n.removeAttribute(a.name);
+    else if(/url\(\s*['"]?(?!#)/i.test(a.value))n.removeAttribute(a.name);}});
+  const vb=root.getAttribute('viewBox')||('0 0 '+(parseFloat(root.getAttribute('width'))||800)+' '+(parseFloat(root.getAttribute('height'))||600));
+  const ser=new XMLSerializer();let inner='';root.childNodes.forEach(c=>{inner+=ser.serializeToString(c);});
+  if(inner.replace(/\s/g,'').length<200)return null;
+  return {vb,inner};}
+async function svgAgent(id,prompt){const tier=S.art.detail==='fine'?'complex':'default';
+  let c=cleanSvg(await agent(id,prompt,{tier,fresh:true}));
+  if(!c)c=cleanSvg(await agent(id,prompt+'\n\n注意：上一次输出的代码不完整。这次请画得更简洁，总长度不超过 5000 个字符，并确保所有标签闭合。',{tier,fresh:true}));
+  if(!c)throw{code:'bad_svg'};return c;}
+async function t2i(prompt,o={}){const c=S.cfg.image,ctl=new AbortController();CTLS.add(ctl);
+  const body={model:c.model,prompt:String(prompt).slice(0,1500),aspect_ratio:o.ratio||S.art.ratio,response_format:o.url?'url':'base64',n:1,prompt_optimizer:true};
+  if(o.ref)body.subject_reference=[{type:'character',image_file:o.ref}];
+  try{let r;try{const E=eff('image');r=await fetch(E==='proxy'?API+'/api/minimax/image_generation':c.endpoint,{method:'POST',signal:ctl.signal,headers:E==='proxy'?hdr():{'Content-Type':'application/json','Authorization':'Bearer '+c.key},body:JSON.stringify(body)});}
+    catch(e){throw{code:ctl.signal.aborted?'cancelled':'network'};}
+    if(!r.ok)throw await httpErr(r);
+    const j=await r.json(),d=j.data||{},out=o.url?(d.image_urls&&d.image_urls[0]):(d.image_base64&&d.image_base64[0]);
+    if(!out){const sc=j.base_resp&&j.base_resp.status_code;if(sc===1008)throw{code:'no_balance'};if(sc===1004)throw{code:'bad_key'};throw{code:'http',message:(j.base_resp&&j.base_resp.status_msg)||'没有返回图片'};}
+    return o.url?out:'data:image/jpeg;base64,'+out;
+  }finally{CTLS.delete(ctl);}}
+async function seedream(prompt,o={}){const c=S.cfg.ark,ctl=new AbortController();CTLS.add(ctl);
+  const body={model:c.model,prompt:String(prompt).slice(0,1200),size:sdSize(o.ratio||S.art.ratio),response_format:'b64_json',watermark:false};
+  if(o.refs&&o.refs.length)body.image=o.refs.length===1?o.refs[0]:o.refs;
+  try{let r;const E=eff('image');
+    try{r=await fetch(E==='proxy'?API+'/api/seedream/images/generations':c.endpoint,{method:'POST',signal:ctl.signal,headers:E==='proxy'?hdr():{'Content-Type':'application/json','Authorization':'Bearer '+c.key},body:JSON.stringify(body)});}
+    catch(e){throw{code:ctl.signal.aborted?'cancelled':'network'};}
+    if(!r.ok)throw await httpErr(r);
+    const j=await r.json(),d=j.data&&j.data[0];
+    if(!d||!(d.b64_json||d.url))throw{code:'http',message:(j.error&&j.error.message)||'没有返回图片'};
+    return d.b64_json?'data:image/jpeg;base64,'+d.b64_json:d.url;
+  }finally{CTLS.delete(ctl);}}
+async function track(id,fn){const cur=S.ag[id]||{run:0};agSet(id,{run:cur.run+1,st:'run',chars:0,note:''});render();
+  try{const r=await fn();agSet(id,{run:S.ag[id].run-1,st:'done'});return r;}
+  catch(e){agSet(id,{run:S.ag[id].run-1,st:e&&e.code==='cancelled'?'idle':'err',note:emsg(e)});throw e;}}
+const thumbCache=new Map();
+function miniScene(k,p){const ol=k.outline?' stroke="'+p[5]+'" stroke-width="3" stroke-linejoin="round"':'',L=(k.layer||k.gloss)?' filter="url(#sk-shadow)"':'';
+  return '<rect width="200" height="150" fill="'+p[0]+'"/><circle cx="158" cy="34" r="17" fill="'+p[1]+'"'+ol+'/>'+
+  '<g'+L+'><path d="M-5 105 Q50 62 105 98 T205 86 V155 H-5Z" fill="'+p[3]+'"'+ol+'/></g>'+
+  '<g'+L+'><path d="M-5 126 Q60 98 120 124 T205 114 V155 H-5Z" fill="'+p[4]+'"'+ol+'/></g>'+
+  '<g'+L+'><rect x="40" y="72" width="9" height="42" rx="3" fill="'+p[5]+'"/><circle cx="44" cy="60" r="22" fill="'+p[3]+'"'+ol+'/><circle cx="60" cy="74" r="13" fill="'+p[3]+'"'+ol+'/></g>'+
+  '<g'+L+'><ellipse cx="118" cy="116" rx="20" ry="17" fill="'+p[2]+'"'+ol+'/><circle cx="132" cy="100" r="12" fill="'+p[2]+'"'+ol+'/><path d="M143 99 l10 4 -10 4z" fill="'+p[1]+'"/><circle cx="135" cy="97" r="2.2" fill="'+p[5]+'"/><path d="M106 116 q10 9 21 0" fill="none" stroke="'+p[5]+'" stroke-width="2" stroke-linecap="round"/></g>'+
+  (k.gloss?'<ellipse cx="110" cy="107" rx="7" ry="3.5" fill="#fff" opacity=".6"/><circle cx="151" cy="27" r="4" fill="#fff" opacity=".6"/><ellipse cx="36" cy="50" rx="8" ry="4" fill="#fff" opacity=".4"/>':'');}
+function thumb(sid,pid){const key=sid+'|'+pid;if(!thumbCache.has(key)){const s=STYLES.find(x=>x.id===sid),p=PALS.find(x=>x.id===pid);thumbCache.set(key,toData(wrapSvg('0 0 200 150',miniScene(s.kit,p.c),s.kit)));}return thumbCache.get(key);}
+function shotThumb(shot){const sc={'远景':0.28,'全景':0.6,'中景':1.15,'近景':1.9,'特写':3.2}[shot]||0.6,cy={'远景':34,'全景':36,'中景':44,'近景':54,'特写':66}[shot]||36;
+  return '<svg viewBox="0 0 80 56" aria-hidden="true"><rect width="80" height="56" fill="#EAF2EE"/><rect y="40" width="80" height="16" fill="#CBDDD2"/><g transform="translate(40 '+cy+') scale('+sc+')"><path d="M-8 -6h16l3 22h-22z" fill="var(--accent)"/><circle cy="-14" r="7" fill="#F2C9A0"/><circle cx="-2.5" cy="-15" r="1" fill="#15232A"/><circle cx="2.5" cy="-15" r="1" fill="#15232A"/></g></svg>';}
+
+/* ========== 流程：需求 → 梗概 → 故事 → 插图 → 阅读 ========== */
+function setNeed(k,v){S.needs[k]=v;S.needsRev++;}
+function pickRole(id){if(S.role!==id){S.role=id;S.needsRev++;}if(!S.ui.voicePicked&&ROLE_VOICE[id])S.cfg.tts.voice=ROLE_VOICE[id];S.wiz=0;go('needs');if(isSimple())sayQ();}
+function qList(){return Q.filter(q=>!q.roles||q.roles.includes(S.role));}
+const qTitle=q=>(S.role==='child'&&q.tc)||(S.role==='elder'&&q.te)||q.t||q.te||q.tc;
+function sayQ(){if(!S.cfg.voice)return;const q=qList()[S.wiz];if(q)say(qTitle(q));}
+function needsOK(){return S.needs.band&&Object.keys(S.needs.interests).length>0;}
+async function genOutline(revise){
+  if(!needsOK()){S.err='请先选好年龄，并至少选一个兴趣。';render();return;}
+  if(!engineOK())return;
+  const prev=revise&&S.outline&&S.outline.d?S.outline:null;
+  const fb=prev?prev.fb.concat(prev.fbText?[prev.fbText]:[]).join('；'):'';
+  const rev=S.needsRev;S.load.outline=true;go('outline');
+  try{const d=await agent('planner',pOutline(prev,fb),{json:true,fresh:!!S.outline,temp:TEMP(),model:WM()});
+    d.characters=Array.isArray(d.characters)?d.characters.slice(0,3):[];d.beats=Array.isArray(d.beats)?d.beats:[];d.knowledge=Array.isArray(d.knowledge)?d.knowledge:[];
+    if(!d.title||!d.synopsis)throw{code:'invalid_json'};
+    S.outline={rev:++SEQ,needsRev:rev,d,rating:0,fb:[],fbText:''};
+    if(isSimple()&&S.cfg.voice)say('故事点子想好了。书名叫'+d.title+'。'+d.synopsis);
+  }catch(e){fail(e);}
+  S.load.outline=false;render();}
+async function genStory(fb){
+  if(!engineOK())return;const ol=S.outline;S.load.story='write';const old=S.story;S.story=null;go('story');
+  let pages;
+  try{const d=await agent('writer',pStory(fb),{json:true,fresh:!!old,temp:TEMP(),model:WM()});
+    pages=(Array.isArray(d.pages)?d.pages:[]).map((p,i)=>({n:i+1,text:String(p.text||''),scene:String(p.scene||''),interact:String(p.interact||''),shot:'',angle:'',action:'',bg:''})).filter(p=>p.text);
+    if(!pages.length)throw{code:'invalid_json'};
+  }catch(e){fail(e);S.story=old;S.load.story=false;S.step='outline';render();return;}
+  let notes=[],editErr='';
+  if(S.cfg.edit){S.load.story='edit';render();
+    try{const d=await agent('editor',pEdit(pages),{json:true,fresh:true,temp:0.7,model:WM()});
+      const arr=Array.isArray(d.pages)?d.pages:[];
+      pages.forEach((p,i)=>{const e=arr.find(x=>+x.n===p.n)||arr[i];const t=e&&String(e.text||'').trim();if(t&&t!==p.text){p.draft=p.text;p.text=t;}});
+      notes=(Array.isArray(d.notes)?d.notes:[]).map(String).filter(Boolean).slice(0,5);
+    }catch(e){if(e&&e.code==='cancelled'){S.story=old;S.load.story=false;S.step='outline';render();return;}editErr=emsg(e);}}
+  S.story={id:++SEQ,needsRev:ol.needsRev,outlineRev:ol.rev,title:ol.d.title,pages,review:null,confirmed:false,autoFixed:0,shotsNote:'',editNotes:notes,editErr};
+  S.art.imgs={};S.art.sheet=null;S.art.trial=false;S.guide=null;S.chat=[];S.ui.storyFb='';
+  S.load.story=false;render();postStory();}
+function postStory(){const sid=S.story.id;S.load.review=S.load.shots=true;render();
+  agent('reviewer',pReview(),{json:true}).then(r=>{if(!S.story||S.story.id!==sid)return;r.fixes=Array.isArray(r.fixes)?r.fixes.filter(f=>f&&f.text&&S.story.pages[f.n-1]):[];r.checks=Array.isArray(r.checks)?r.checks:[];S.story.review=r;
+      if(isSimple()){S.story.autoFixed=r.fixes.length;r.fixes.forEach(f=>{S.story.pages[f.n-1].text=String(f.text);f.done=true;});}})
+    .catch(e=>{if(S.story&&S.story.id===sid)S.story.reviewErr=emsg(e);}).finally(()=>{S.load.review=false;render();});
+  agent('director',pShots(),{json:true}).then(r=>{if(S.story&&S.story.id===sid)applyShots(Array.isArray(r.shots)?r.shots:[],false);})
+    .catch(()=>{if(S.story&&S.story.id===sid)applyShots([],true);}).finally(()=>{S.load.shots=false;render();});}
+function applyShots(arr,failed){const ds=['全景','中景','近景','远景','特写','中景','全景','近景','中景','远景'],da=['平视','俯视','平视','仰视','侧面','平视','背后','平视','俯视','平视'];let miss=failed;
+  S.story.pages.forEach((p,i)=>{const s=arr.find(x=>+x.n===p.n)||arr[i]||{};
+    if(SHOTS[s.shot])p.shot=s.shot;else{p.shot=ds[i%ds.length];miss=true;}
+    if(ANGLES[s.angle])p.angle=s.angle;else p.angle=da[i%da.length];
+    p.action=String(s.action||'');p.bg=String(s.bg||'');
+    if(i>0&&p.shot===S.story.pages[i-1].shot){const ks=Object.keys(SHOTS);p.shot=ks[(ks.indexOf(p.shot)+2)%ks.length];}});
+  S.story.shotsNote=miss?'分镜导演没有给全镜头安排，缺的部分已按固定规则补上（不是模型生成）。':'';}
+function adoptFix(f){S.story.pages[f.n-1].text=String(f.text);f.done=true;render();}
+const storyStale=()=>S.story&&(S.story.needsRev!==S.needsRev||!S.outline||S.story.outlineRev!==S.outline.rev);
+const outlineStale=()=>S.outline&&S.outline.needsRev!==S.needsRev;
+const artKey=()=>[S.story.id,S.art.style,S.art.palette,S.art.ratio].join('|');
+const pgHash=i=>{if(i===0)return S.story.title;const p=S.story.pages[i-1];return p.text+'|'+p.scene+'|'+p.shot+'|'+p.angle;};
+async function ensureSheet(){const key=artKey()+'|'+(bitmap()?imgEngine():'svg');
+  if(S.art.sheet&&S.art.sheet.key===key&&S.art.sheet.st!=='err')return S.art.sheet.wait;
+  const rec=S.art.sheet={st:'run',key};
+  rec.wait=(async()=>{try{
+      if(bitmap()&&imgEngine()==='seedream'){const p=sdSheetPrompt();agSet('designer',{prompt:p});const src=await track('designer',()=>seedream(p,{ratio:'4:3'}));Object.assign(rec,{st:'ok',src,ref:await shrink(src)});}
+      else if(bitmap()){const p=sheetT2I();agSet('designer',{prompt:p});const src=await track('designer',()=>t2i(p,{url:true,ratio:'1:1'}));Object.assign(rec,{st:'ok',src,ref:src});}
+      else{const c=await svgAgent('designer',pSheet());Object.assign(rec,{st:'ok',clean:c,src:toData(wrapSvg(c.vb,c.inner,curStyle().kit))});}}
+    catch(e){Object.assign(rec,{st:'err',err:emsg(e),code:e&&e.code});}render();})();
+  render();return rec.wait;}
+async function paint(i,note){const key=artKey(),rec=S.art.imgs[i]={st:'run',key};render();
+  try{let src,noRef=false;
+    const sh=S.art.sheet,sheetOK=sh&&sh.st==='ok'&&sh.ref;
+    if(bitmap()&&imgEngine()==='seedream'){const refs=[];if(S.art.useRef&&sheetOK)refs.push(sh.ref);
+      const p1=S.art.imgs[1];if(S.art.useRef&&i!==1&&p1&&p1.st==='ok'&&p1.key===key){if(!p1.ref)p1.ref=await shrink(p1.src);refs.push(p1.ref);}
+      const p=sdPagePrompt(i,note,refs.length);agSet('painter',{prompt:p});
+      src=await track('painter',async()=>{try{return await seedream(p,{refs});}catch(e){if(refs.length&&e&&e.code==='http'){noRef=true;return await seedream(sdPagePrompt(i,note,0),{});}throw e;}});}
+    else if(bitmap()){const p=t2iPrompt(i,note),ref=S.art.useRef&&humanHero()&&sheetOK;agSet('painter',{prompt:p});
+      src=await track('painter',async()=>{try{return await t2i(p,ref?{ref}:{});}catch(e){if(ref&&e&&e.code==='http'){noRef=true;return await t2i(p,{});}throw e;}});}
+    else{const c=await svgAgent('painter',pPaint(i,note));src=toData(wrapSvg(c.vb,c.inner,curStyle().kit));}
+    if(S.art.imgs[i]===rec)Object.assign(rec,{st:'ok',src,noRef,hash:pgHash(i)});
+  }catch(e){if(S.art.imgs[i]===rec)Object.assign(rec,{st:'err',err:emsg(e),code:e&&e.code});}
+  render();return rec;}
+async function trial(){if(!engineOK('image'))return;S.art.trial=true;S.err=null;render();await ensureSheet();await paint(1);if(isSimple()&&S.cfg.voice&&S.art.imgs[1]&&S.art.imgs[1].st==='ok')say('第一页画好了，您看看喜不喜欢。');}
+async function genAll(force){if(!engineOK('image'))return;const N=S.story.pages.length,todo=[];
+  for(let i=0;i<=N;i++){const r=S.art.imgs[i];if(force||!r||r.st!=='ok'||r.key!==artKey())todo.push(i);}
+  if(!todo.length)return;todo.sort((a,b)=>(a===1?-1:b===1?1:a-b));S.art.batch={total:todo.length,done:0,stop:false};S.err=null;render();
+  await ensureSheet();let k=0;
+  const worker=async()=>{while(k<todo.length&&S.art.batch&&!S.art.batch.stop){const r=await paint(todo[k++]);
+    if(r.st==='err'&&['rate_limited','not_granted','no_engine','network','no_key','sampling_disabled','session_expired'].includes(r.code)){S.art.batch.stop=true;S.err=r.err;}
+    if(S.art.batch)S.art.batch.done++;render();}};
+  await Promise.all([worker(),worker()]);S.art.batch=null;render();
+  if(isSimple()&&S.cfg.voice)say('绘本画好了，可以开始看书了。');}
+const imgOK=i=>{const r=S.story&&S.art.imgs[i];return r&&r.st==='ok'?r:null;};
+function bookPages(){const s=S.story;return [{cover:true,text:s.title,img:imgOK(0)}].concat(s.pages.map((p,i)=>({n:p.n,text:p.text,interact:p.interact,img:imgOK(i+1)})));}
+function enterRead(){S.reader.i=0;S.reader.auto=false;go('read');if(!S.guide&&!S.load.guide)genGuide();}
+async function genGuide(){if(!engineOK())return;S.load.guide=true;S.guideErr='';render();const sid=S.story.id;
+  try{const g=await agent('guide',pGuide(),{json:true});if(S.story&&S.story.id===sid){g.questions=Array.isArray(g.questions)?g.questions:[];g.tips=Array.isArray(g.tips)?g.tips:[];g.keywords=Array.isArray(g.keywords)?g.keywords:[];S.guide=g;}}
+  catch(e){S.guideErr=emsg(e);}
+  S.load.guide=false;render();}
+async function sendChat(){const t=S.chatIn.trim();if(!t||S.load.chat)return;if(!engineOK())return;
+  S.chat.push({role:'user',content:t});S.chatIn='';S.load.chat=true;render();
+  try{const a=await agent('guide',[{role:'user',content:chatRules()}].concat(S.chat.slice(-12)),{tier:'quick',fresh:true});S.chat.push({role:'assistant',content:String(a).trim()});if(S.cfg.voice&&isSimple())say(String(a));}
+  catch(e){S.chat.pop();S.chatIn=t;fail(e);}
+  S.load.chat=false;render();}
+function readAloud(){const ps=bookPages(),p=ps[S.reader.i],nx=ps[S.reader.i+1];if(ttsCloud()&&nx){const c=ttsChunks(nx.text)[0];if(c)ttsFetch(c).catch(()=>{});}say(p.text,ok=>{if(ok&&S.reader.auto&&S.step==='read'){const n=bookPages().length;if(S.reader.i<n-1){S.reader.i++;render();readAloud();}else{S.reader.auto=false;render();}}else if(S.reader.auto){S.reader.auto=false;render();}});}
+function exportHtml(){const s=S.story,body=bookPages().map(p=>'<section>'+(p.img?'<img alt="" src="'+p.img.src+'">':'')+(p.cover?'<h1>'+esc(s.title)+'</h1>':'<p>'+esc(p.text)+'</p>')+'</section>').join('');
+  const g=S.guide,qs=g&&g.questions.length?'<section><h2>读完聊一聊</h2><ol>'+g.questions.map(q=>'<li>'+esc(q.q)+'</li>').join('')+'</ol></section>':'';
+  return '<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+esc(s.title)+'</title><style>body{margin:0;background:#f1f5ee;font-family:"Microsoft YaHei UI","PingFang SC",sans-serif;color:#15232a}section{max-width:760px;margin:24px auto;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,.1)}img{display:block;width:100%}h1{text-align:center;font-size:2.2rem;margin:16px}h2{margin:16px 24px 0}p,ol{font-size:1.4rem;line-height:2;margin:0;padding:18px 26px}ol{padding-left:52px}footer{text-align:center;color:#51636b;font-size:.85rem;padding:0 16px 32px}@media print{section{box-shadow:none;break-inside:avoid;page-break-after:always}}</style></head><body>'+body+qs+'<footer>本绘本的文字与插图由人工智能生成，供图书馆儿童阅读推广活动使用。</footer></body></html>';}
+async function saveBook(){const name=(S.story.title||'绘本').replace(/[\\/:*?"<>|]/g,'')+'.html';
+  if(CAP.dl){try{await CAP.dl.save({filename:name,data:exportHtml()});S.ui.saved='已保存。用浏览器打开这个文件就能阅读或打印。';}catch(e){S.ui.saved=e&&e.code==='declined'?'':'这里暂时不能保存文件。';}}
+  else{try{const u=URL.createObjectURL(new Blob([exportHtml()],{type:'text/html'})),a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000);S.ui.saved='已保存到“下载”文件夹，用浏览器打开就能阅读或打印。';}catch(e){S.ui.saved='保存失败。';}}
+  render();}
+
+/* ========== 视图 ========== */
+function view(){return h('div',{class:'wrap'},header(),S.role&&stepper(),S.role&&dock(),S.err&&h('div',{class:'err',role:'alert'},h('span',{},S.err),h('button',{class:'btn ghost sm',onclick:()=>{S.err=null;render();}},'知道了')),main(),S.drawer&&drawer());}
+function header(){const st=ONLINE?(CAP.sample?['ok','在线演示：内置引擎代演']:CAP.checked?['bad','未连上模型']:['wait','正在连接模型…']):BK?(BK.text&&imgReady()?['ok',(BK.mode==='local'?'本地应用':'网页版')+'：DeepSeek · '+(imgEngine()==='seedream'?'Seedream':'MiniMax')+(BK.tts?' · 腾讯云语音':'')]:['bad',BK.mode==='local'?'请先保存密钥':'服务器未配置密钥']):(S.cfg.text.key&&imgReady()?['ok','DeepSeek 写故事 · '+imgName()+' 画图']:['bad','请先填两把 API 密钥']);
+  return h('header',{class:'top'},h('div',{class:'brand'},h('span',{class:'logo'},'绘声绘色'),h('span',{class:'sub'},'儿童 AI 绘本工坊 · '+(ONLINE?'在线演示':BK?(BK.mode==='local'?'Windows 本地版':'网页版'):(location.protocol==='file:'?'本地文件版':'网页直连版')))),
+    h('div',{class:'tools'},h('span',{class:'pill '+st[0]},h('i'),st[1]),
+      S.role&&h('button',{class:'btn ghost sm',onclick:()=>{stopAll();go('role');}},ROLES[S.role].icon+' 换身份'),
+      voiceOK()&&h('button',{class:'btn ghost sm',onclick:()=>{S.cfg.voice=!S.cfg.voice;if(!S.cfg.voice)stopSay();render();}},S.cfg.voice?'🔊 语音提示开':'🔇 语音提示关'),
+      h('button',{class:'btn ghost sm',onclick:()=>{S.drawer=true;render();}},'⚙ 设置')));}
+function stepper(){const kid=S.role==='child';const steps=[['needs',kid?'我喜欢':'说需求'],['outline',kid?'故事点子':'审梗概'],['story',kid?'听故事':'定故事'],['art',kid?'画画':'配插图'],['read',kid?'看书':'读绘本']];
+  const can={needs:true,outline:!!S.outline||S.load.outline,story:!!S.story||S.load.story,art:!!(S.story&&S.story.confirmed),read:!!(S.story&&S.story.confirmed)};const idx=steps.findIndex(s=>s[0]===S.step);
+  return h('nav',{class:'steps','aria-label':'制作步骤'},steps.map((s,i)=>h('button',{class:'step'+(s[0]===S.step?' on':i<idx?' done':''),disabled:!can[s[0]],onclick:()=>{if(s[0]==='read')enterRead();else go(s[0]);}},h('b',{},'第 '+(i+1)+' 步'),s[1])));}
+function dock(){const running=AGENTS.filter(a=>S.ag[a.id]&&S.ag[a.id].run>0);
+  if(isSimple()){if(!running.length)return null;return h('div',{class:'working',role:'status'},h('span',{class:'dots'}),running.map(a=>a.kid).join('、')+'正在忙，请稍等一会儿…',h('button',{class:'btn ghost sm',onclick:()=>{stopAll();render();}},'停下'));}
+  return h('div',{class:'dock'},h('div',{class:'dock-h'},h('strong',{},'智能体协作'),running.length?h('button',{class:'btn ghost sm',onclick:()=>{stopAll();render();}},'停止生成'):h('span',{class:'hint'},'每个智能体各司其职，可在设置里改约束')),
+    h('div',{class:'ags'},AGENTS.map(a=>{const s=S.ag[a.id]||{},st=s.run>0?'run':(s.st||'idle');return h('div',{class:'ag '+st,title:a.does},h('i'),h('b',{},a.name),h('span',{'data-prog':st==='run'?a.id:null},st==='run'?(s.chars?'已写 '+s.chars+' 字':a.cap==='图像'?'作画中…':'思考中…'):st==='done'?'完成':st==='err'?'出错':'待命'));})));}
+function loadCard(id,text){return h('div',{class:'card',role:'status'},h('h2',{},text),h('p',{class:'hint'},'模型要先想一想再动笔，通常需要十几秒到一分钟。'),h('p',{},h('span',{class:'tag w','data-prog':id},'思考中…')));}
+function main(){return ({role:vRole,needs:vNeeds,outline:vOutline,story:vStory,art:vArt,read:vRead}[S.step]||vRole)();}
+
+function vRole(){return h('section',{class:'sec'},
+  h('h1',{class:'hero'},'今天，谁来做这本绘本？'),
+  h('p',{class:'lead'},'选好身份，界面和引导方式会跟着变。八个智能体分工合作：先把故事写好给你看，你点头之后再配图。'),
+  engineCard(),
+  h('div',{class:'roles'},Object.entries(ROLES).map(([id,r])=>h('button',{class:'role',style:'--accent:'+r.c+';--accent-soft:'+r.s,onclick:()=>pickRole(id)},h('span',{class:'ric'},r.icon),h('span',{class:'rn'},r.name),h('span',{class:'rt'},r.tag),h('span',{class:'rd'},r.desc)))),
+  h('div',{class:'card'},h('h2',{},'智能体流水线'),h('p',{class:'hint'},'文字类智能体用 DeepSeek，图像类智能体用 Seedream 或 MiniMax，朗读用腾讯云语音。'),
+    h('div',{class:'pipe',style:'margin-top:10px'},AGENTS.map((a,i)=>h('div',{class:'n'},h('em',{},(i+1)+' · '+a.cap),h('b',{},a.name),a.does)))),
+  h('p',{class:'hint'},'隐私：填写的内容只留在这次打开的页面里，关闭即清除；生成时会发送给所选的模型。请用孩子的小名，不要填写真实全名、学校和住址。'));}
+
+function addBox(key,onAdd){
+  if(S.ui.adding!==key)return h('button',{class:'chip',type:'button',onclick:()=>{S.ui.adding=key;S.ui.addVal='';render();const el=document.getElementById('add-'+key);el&&el.focus();}},'＋ 自己填');
+  const done=()=>{const v=(S.ui.addVal||'').trim().slice(0,20);S.ui.adding='';S.ui.addVal='';if(v){const a=S.customOpts[key]=S.customOpts[key]||[];if(!a.includes(v))a.push(v);onAdd(v);}render();};
+  return h('span',{class:'tf',style:'flex:1 1 100%'},textField('add-'+key,()=>S.ui.addVal,v=>{S.ui.addVal=v;},{ph:'写好后点“加上”',enter:done}),h('button',{class:'btn sm',type:'button',onclick:done},'加上'));}
+function optChips(q){const n=S.needs,multi=q.type==='multi',opts=q.opts.concat((S.customOpts[q.id]||[]).map(v=>o(v,'✏️')));
+  const pick=(v,on)=>{if(multi){let a=n[q.id].slice();if(on)a=a.filter(x=>x!==v);else if(!a.includes(v)){a.push(v);if(q.max&&a.length>q.max)a.shift();}setNeed(q.id,a);}else setNeed(q.id,on&&!q.req?'':v);};
+  return h('div',{class:'chips',role:'group'},opts.map(op=>{const on=multi?n[q.id].includes(op.v):n[q.id]===op.v;
+    return h('button',{class:'chip'+(on?' on':''),type:'button','aria-pressed':on?'true':'false',onclick:()=>{pick(op.v,on);render();}},op.i&&h('span',{class:'ci'},op.i),(S.role==='child'&&op.lc)||op.l);}),
+    q.custom&&addBox(q.id,v=>pick(v,false)));}
+function interestField(){const n=S.needs;return h('div',{},h('div',{class:'chips'},INTS.map(c=>{const on=!!n.interests[c.id];return h('button',{class:'chip'+(on?' on':''),type:'button','aria-pressed':on?'true':'false',onclick:()=>{const m=Object.assign({},n.interests);if(on)delete m[c.id];else m[c.id]=[];setNeed('interests',m);render();}},h('span',{class:'ci'},c.icon),c.label);})),
+  Object.keys(n.interests).map(id=>h('div',{class:'subs'},h('div',{class:'hint',style:'margin-bottom:6px'},id==='other'?'喜欢的别的东西，自己填：':(S.role==='child'?'最喜欢哪一种':'具体喜欢')+INT[id].label+'里的：'),h('div',{class:'chips'},INT[id].subs.concat(S.customOpts['int-'+id]||[]).map(s=>{const on=n.interests[id].includes(s);return h('button',{class:'chip'+(on?' on':''),type:'button',onclick:()=>{const m=Object.assign({},n.interests);m[id]=on?m[id].filter(x=>x!==s):m[id].concat(s);setNeed('interests',m);render();}},s);}),
+    addBox('int-'+id,v=>{const m=Object.assign({},n.interests);if(!m[id].includes(v))m[id]=m[id].concat(v);setNeed('interests',m);})))));}
+function conflictCard(){const c=conflicts();if(!c.length)return h('div',{class:'card'},h('span',{class:'tag g'},'需求核对'),' 各选项之间没有发现矛盾。');
+  return h('div',{class:'card sec'},h('h2',{},'需求核对：有 '+c.length+' 处需要留意'),h('p',{class:'hint'},'可以一键修正；不修正的，会按括号里的规则交给智能体处理。'),c.map(x=>h('div',{class:'stale'},h('span',{},x.m+(x.r?'（不改则：'+x.r+'）':'')),x.fix&&h('button',{class:'btn sm',onclick:()=>{x.fix[1]();render();}},x.fix[0]))));}
+function textField(id,get,set,o={}){const el=o.rows?h('textarea',{id,rows:o.rows,placeholder:o.ph||'',oninput:e=>set(e.target.value)}):h('input',{id,type:'text',placeholder:o.ph||'',autocomplete:'off',oninput:e=>set(e.target.value),onkeydown:o.enter?(e=>{if(e.key==='Enter'){e.preventDefault();o.enter();}}):null});
+  el.value=get()||'';return h('div',{class:'tf'},el,mic(id,get,set));}
+function field(q){return q.type==='interest'?interestField():q.type==='text'?textField('f-'+q.id,()=>S.needs[q.id],v=>setNeed(q.id,v),q):optChips(q);}
+function gradeCard(){const b=band();return h('div',{class:'card'},h('h2',{},'分级框定'),h('p',{class:'hint'},'年龄段沿用团体标准 T/BPDAC 001—2023《3—8岁儿童分级阅读指导》的五段划分并向两端延伸；页数与字数是本应用的演示设定，可在“篇幅”里调整。'),
+  h('div',{class:'grade',style:'margin-top:10px'},h('div',{},h('b',{},b.label),'年龄段'),h('div',{},h('b',{},pagesN()+' 页'),'正文页数（另有封面）'),h('div',{},h('b',{},cr()[0]+'—'+cr()[1]+' 字'),'每页文字'),h('div',{},h('b',{style:'font-size:.9rem'},b.lang),'语言特点')));}
+function vNeeds(){const qs=qList();
+  if(isSimple()){const i=Math.min(S.wiz,qs.length-1),q=qs[i],last=i===qs.length-1;
+    const ok=!q.req||(q.id==='band'?!!S.needs.band:Object.keys(S.needs.interests).length>0);
+    return h('section',{class:'card wiz'},h('div',{class:'bar','aria-label':'进度'},h('i',{style:'width:'+Math.round((i+1)/qs.length*100)+'%'})),
+      h('div',{class:'row',style:'justify-content:space-between'},h('span',{class:'hint'},'第 '+(i+1)+' 问，共 '+qs.length+' 问'),speaker(()=>qTitle(q),'听题目')),
+      h('h2',{class:'wt'},qTitle(q)),field(q),
+      q.id==='nick'&&h('p',{class:'hint'},'用小名就好，不用写真实全名。'),
+      last&&needsOK()&&conflicts().length?conflictCard():null,
+      h('div',{class:'row',style:'margin-top:auto;justify-content:space-between'},
+        h('button',{class:'btn ghost',onclick:()=>{if(i===0)go('role');else{S.wiz=i-1;render();sayQ();}}},'← 上一步'),
+        last?h('button',{class:'btn',disabled:!needsOK(),onclick:()=>genOutline(false)},S.role==='child'?'开始想故事 →':'好了，开始编故事 →')
+            :h('button',{class:'btn',disabled:!ok,onclick:()=>{S.wiz=i+1;render();sayQ();}},(q.opt&&!S.needs[q.id]?'跳过':'下一步')+' →')),
+      !last&&needsOK()&&h('div',{class:'row end'},h('button',{class:'btn ghost sm',onclick:()=>genOutline(false)},'后面不填了，直接编故事')));}
+  const secs=[];qs.forEach(q=>{let s=secs.find(x=>x.name===q.sec);if(!s){s={name:q.sec,qs:[]};secs.push(s);}s.qs.push(q);});
+  return h('section',{class:'sec'},
+    h('div',{},h('h1',{class:'hero'},S.role==='librarian'?'这本绘本用在哪场活动、给谁读？':'说说孩子的情况'),h('p',{class:'lead'},S.role==='librarian'?'按一位典型小读者或一个年龄段来填。之后任何一处修改，已生成的梗概和故事都会标记失效并要求重写。':'带 * 的必填，其余越具体，故事越贴近孩子。')),
+    secs.map(s=>h('div',{class:'card sec'},h('h2',{},s.name),s.qs.map(q=>h('div',{class:'q'},h('div',{class:'ql'},qTitle(q)+(q.req?' *':'')),field(q))))),
+    S.role==='librarian'&&S.needs.band&&gradeCard(),
+    needsOK()&&conflictCard(),
+    h('div',{class:'row end'},!needsOK()&&h('span',{class:'hint'},'还需要：年龄、至少一个兴趣'),h('button',{class:'btn',disabled:!needsOK(),onclick:()=>genOutline(false)},S.outline?'按现在的需求重新归纳梗概 →':'让故事策划归纳梗概 →')));}
+
+function staleBar(text,btn,fn){return h('div',{class:'stale',role:'alert'},h('span',{},text),h('button',{class:'btn sm',onclick:fn},btn));}
+function vOutline(){
+  if(S.load.outline)return loadCard('planner',isSimple()?'点子大王正在想故事…':'故事策划正在把需求归纳成梗概…');
+  const ol=S.outline;if(!ol)return h('div',{class:'card'},h('h2',{},'还没有梗概'),h('p',{},'上一次没有生成成功。'),h('div',{class:'row'},h('button',{class:'btn',onclick:()=>genOutline(false)},'重试'),h('button',{class:'btn ghost',onclick:()=>go('needs')},'回去改需求')));
+  const d=ol.d,stale=outlineStale(),simple=isSimple(),pro=S.role==='librarian';
+  const edit=(k)=>e=>{d[k]=e.target.value;ol.rev=++SEQ;};
+  return h('section',{class:'sec'},
+    stale&&staleBar('需求已经改过，这份梗概是按旧需求写的，已失效。','按新需求重新归纳',()=>genOutline(false)),
+    h('div',{class:'card'},
+      h('div',{class:'row',style:'justify-content:space-between'},h('span',{class:'tag'},simple?'故事点子':'梗概 · 待你审阅'),speaker(()=>'书名：'+d.title+'。'+d.synopsis,'听故事点子')),
+      simple?h('h2',{style:'font-family:var(--display);font-weight:400;font-size:1.8rem;margin:8px 0'},d.title)
+            :h('div',{class:'fld'},h('label',{for:'ol-title'},'书名'),h('input',{class:'in',id:'ol-title',value:d.title,oninput:edit('title')})),
+      simple?h('p',{style:'font-size:1.15rem'},d.synopsis)
+            :h('div',{class:'fld'},h('label',{for:'ol-syn'},'梗概（可直接修改）'),h('textarea',{class:'in',id:'ol-syn',rows:4,oninput:edit('synopsis')},d.synopsis)),
+      !simple&&h('dl',{class:'kv'},h('dt',{},'一句话主线'),h('dd',{},d.logline),h('dt',{},'想传递'),h('dd',{},d.theme),h('dt',{},'知识点'),h('dd',{},d.knowledge.map(k=>h('span',{class:'tag g'},k)))),
+      h('h3',{},simple?'故事里有谁':'角色（定妆依据）'),h('div',{class:'list'},d.characters.map(c=>h('div',{},h('b',{},c.name),'　',h('span',{class:'hint'},c.kind+(simple?'，'+c.trait:'；'+c.look+'；'+c.trait))))),
+      !simple&&h('details',{open:pro||null},h('summary',{},'逐页节拍（'+d.beats.length+' 页）'),h('ol',{class:'beats'},d.beats.map(b=>h('li',{},b)))),
+      !simple&&d.why&&h('p',{class:'hint',style:'margin-top:10px'},'为什么适合：'+d.why)),
+    h('div',{class:'card sec'},h('h2',{},simple?'喜欢这个故事吗？':'评分与意见'),
+      h('div',{class:'stars',role:'group','aria-label':'评分'},[1,2,3,4,5].map(n=>h('button',{type:'button',class:n<=ol.rating?'on':'','aria-label':n+' 星',onclick:()=>{ol.rating=n;render();}},'★'))),
+      h('div',{class:'chips'},FB.map(f=>{const on=ol.fb.includes(f);return h('button',{class:'chip'+(on?' on':''),type:'button',onclick:()=>{ol.fb=on?ol.fb.filter(x=>x!==f):ol.fb.concat(f);render();}},f);})),
+      textField('ol-fb',()=>ol.fbText,v=>{ol.fbText=v;},{ph:simple?'也可以说说哪里想改':'其他意见，例如：把小狐狸换成小兔子，多讲讲种子怎么发芽',rows:simple?null:2}),
+      h('div',{class:'row end'},h('button',{class:'btn ghost',onclick:()=>genOutline(true)},simple?'换一个故事':'按意见改一版'),
+        h('button',{class:'btn',disabled:stale,onclick:()=>genStory('')},simple?'喜欢，写成故事 →':'满意，写成完整故事 →'))));}
+
+function editCard(){const s=S.story;if(isSimple()||!(s.editNotes&&s.editNotes.length||s.editErr))return null;
+  const changed=s.pages.filter(p=>p.draft);
+  return h('div',{class:'card'},h('h2',{},'文学编辑的润色'),
+    s.editErr?h('p',{class:'hint'},'这次没能润色（'+s.editErr+'），下面是作家初稿。'):h('ul',{class:'plain'},s.editNotes.map(n=>h('li',{},n))),
+    changed.length?h('details',{},h('summary',{},'对照初稿（改动了 '+changed.length+' 页）'),h('div',{class:'list',style:'margin-top:8px'},changed.map(p=>h('div',{},h('b',{},'第 '+p.n+' 页 初稿：'),h('span',{class:'hint'},p.draft))))):null);}
+function reviewCard(){const s=S.story,r=s.review;
+  if(S.load.review)return h('div',{class:'card'},h('h2',{},'适龄审校'),h('p',{class:'hint'},'审校智能体正在核对字数、用词、知识和安全…'));
+  if(!r)return s.reviewErr?h('div',{class:'card'},h('h2',{},'适龄审校'),h('p',{},'审校没有完成：'+s.reviewErr),h('p',{class:'hint'},'这本故事还没有经过审校，请人工通读后再使用。')):null;
+  if(isSimple())return h('div',{class:'card'},h('span',{class:'tag g'},'把关老师看过了'),' '+(s.autoFixed?'已经帮忙改好 '+s.autoFixed+' 处不太合适的地方。':'没有发现不适合孩子的地方。'));
+  return h('div',{class:'card'},h('div',{class:'row',style:'justify-content:space-between'},h('h2',{},'适龄审校'),h('span',{class:'tag '+(r.score>=4?'g':r.score>=3?'w':'b')},'评分 '+r.score+' / 5')),h('p',{},r.summary),
+    h('div',{class:'list'},r.checks.map(c=>h('div',{},h('span',{class:'tag '+(c.ok?'g':'b')},c.ok?'通过':'需修改'),h('b',{},c.item),c.note?'：'+c.note:''))),
+    r.fixes.length?h('div',{},h('h3',{},'修改建议'),h('div',{class:'list'},r.fixes.map(f=>h('div',{class:'pg'},h('div',{class:'pg-h'},h('b',{},'第 '+f.n+' 页'),f.done?h('span',{class:'tag g'},'已采纳'):h('button',{class:'btn sm',onclick:()=>adoptFix(f)},'采纳这处修改')),h('small',{},'问题：'+f.problem),h('div',{},f.text))))):null);}
+function vStory(){
+  if(S.load.story==='edit')return loadCard('editor',isSimple()?'润色老师正在把故事从头读一遍，让句子更好听…':'文学编辑正在逐页朗读初稿、润色句子…');
+  if(S.load.story)return loadCard('writer',isSimple()?'故事老师正在写故事…':'故事作家正在逐页写作…');
+  const s=S.story;if(!s)return h('div',{class:'card'},h('h2',{},'还没有故事'),h('button',{class:'btn',onclick:()=>go('outline')},'回到梗概'));
+  const simple=isSimple(),pro=S.role==='librarian',stale=storyStale(),b={chars:cr()};
+  return h('section',{class:'sec'},
+    stale&&staleBar('需求或梗概已经改过，这份故事已失效，不能用于配图。','回到梗概重新确认',()=>{if(outlineStale())genOutline(false);else go('outline');}),
+    h('div',{class:'row',style:'justify-content:space-between'},h('h1',{class:'hero'},'《'+s.title+'》'),speaker(()=>s.pages.map(p=>p.text).join('　'),simple?'把故事读给我听':'朗读全文')),
+    editCard(),reviewCard(),
+    h('div',{class:'list'},s.pages.map((p,i)=>{const len=p.text.replace(/[\s，。！？、；：“”‘’…—,.!?]/g,'').length,bad=len<b.chars[0]||len>b.chars[1];
+      return h('div',{class:'pg'},h('div',{class:'pg-h'},h('b',{},'第 '+p.n+' 页'),h('span',{},p.shot?h('span',{class:'tag'},p.shot+' · '+p.angle):S.load.shots?h('span',{class:'tag w'},'分镜安排中'):null,!simple&&h('span',{class:'tag '+(bad?'w':'g')},len+' 字'))),
+        simple?h('p',{class:'bigtxt'},p.text):h('textarea',{id:'pt-'+i,rows:3,'aria-label':'第 '+p.n+' 页文字',oninput:e=>{p.text=e.target.value;}},p.text),
+        !simple&&(pro?h('div',{class:'fld',style:'margin:0'},h('label',{for:'ps-'+i},'画面说明（给画师）'),h('input',{class:'in',id:'ps-'+i,value:p.scene,oninput:e=>{p.scene=e.target.value;}})):h('small',{},'画面：'+p.scene)),
+        p.interact&&h('small',{},(S.role==='child'?'小任务：':'互动提示：')+p.interact));})),
+    s.shotsNote&&h('p',{class:'hint'},s.shotsNote),
+    h('div',{class:'card sec'},h('h2',{},simple?'这个故事可以吗？':'确认故事'),
+      !simple&&textField('st-fb',()=>S.ui.storyFb,v=>{S.ui.storyFb=v;},{ph:'想整体重写时填写意见，例如：语言再口语一点，第 3 页加一句重复的话',rows:2}),
+      h('p',{class:'hint'},simple?'点“开始画画”以后，小画家才会动笔。':'确认后才会进入配图。上面的文字可以直接改，改完即生效。'),
+      h('div',{class:'row end'},h('button',{class:'btn ghost',onclick:()=>genStory(S.ui.storyFb||'请换一种写法重写')},simple?'换一种讲法':'重写故事'),
+        h('button',{class:'btn',disabled:stale||S.load.shots,onclick:()=>{s.confirmed=true;go('art');if(simple&&S.cfg.voice)say('请选一种您喜欢的画法，然后点先画一页看看。');}},S.load.shots?'等分镜导演排好镜头…':simple?'可以，开始画画 →':'确认故事，去配图 →'))));}
+
+function vArt(){const s=S.story;if(!s||!s.confirmed)return h('div',{class:'card'},h('h2',{},'请先确认故事'),h('button',{class:'btn',onclick:()=>go(S.story?'story':'needs')},'回去确认'));
+  const simple=isSimple(),pro=S.role==='librarian',a=S.art,stale=storyStale(),key=artKey(),N=s.pages.length;
+  const okCount=Array.from({length:N+1},(_,i)=>i).filter(i=>a.imgs[i]&&a.imgs[i].st==='ok'&&a.imgs[i].key===key).length;
+  const oldCount=Object.values(a.imgs).filter(r=>r.st==='ok'&&r.key!==key).length;
+  const set=(k,v)=>()=>{a[k]=v;render();};
+  const ext=bitmap(),sd=imgEngine()==='seedream';
+  return h('section',{class:'sec'},
+    stale&&staleBar('故事已失效，请先回去重新确认，再配图。','回到故事',()=>go('story')),
+    h('div',{class:'card sec'},h('div',{class:'row',style:'justify-content:space-between'},h('h2',{},simple?'选一种画法':'画风'),speaker('请选一种您喜欢的画法。每个小图就是这种画法的样子。','听讲解')),
+      h('div',{class:'thumbs'},STYLES.map(st=>h('button',{class:'th'+(a.style===st.id?' on':''),type:'button','aria-pressed':a.style===st.id?'true':'false',onclick:set('style',st.id)},h('img',{src:thumb(st.id,a.palette),alt:st.name+'示例'}),h('span',{},st.name),h('small',{},st.desc)))),
+      h('h3',{},simple?'选一种颜色':'色调'),
+      h('div',{class:'chips'},PALS.map(p=>h('button',{class:'chip'+(a.palette===p.id?' on':''),type:'button',onclick:set('palette',p.id)},h('span',{class:'sw'},p.c.map(c=>h('i',{style:'background:'+c}))),p.name))),
+      !simple&&h('div',{},h('h3',{},'画幅与精细度'),h('div',{class:'chips'},Object.entries(RATIOS).map(([k,v])=>h('button',{class:'chip'+(a.ratio===k?' on':''),type:'button',onclick:set('ratio',k)},v[2])),
+        h('button',{class:'chip'+(a.detail==='std'?' on':''),type:'button',onclick:set('detail','std')},'标准（较快）'),h('button',{class:'chip'+(a.detail==='fine'?' on':''),type:'button',onclick:set('detail','fine')},'精细（更慢）'))),
+      h('h3',{},simple?'想要什么感觉':'画面氛围'),
+      h('div',{class:'chips'},['明亮欢快','柔和安静','梦幻神秘','热闹丰富'].map(m=>h('button',{class:'chip'+(a.mood===m?' on':''),type:'button',onclick:set('mood',a.mood===m?'':m)},m))),
+      !simple&&h('div',{class:'fld'},h('label',{for:'art-cs'},'自定义画风（可不填，会叠加在所选画风上）'),textField('art-cs',()=>a.customStyle,v=>{a.customStyle=v;},{ph:'例如：像老式年画；线条再粗一点；主角眼睛大大的'})),
+      !simple&&h('div',{class:'fld'},h('label',{for:'art-note'},'全书画面的其他要求（可不填）'),textField('art-note',()=>a.note,v=>{a.note=v;},{ph:'例如：每页都有一只小蜗牛藏在角落；多画些镇江的山和江'})),
+      ext&&!simple&&h('div',{class:'chips'},h('button',{class:'chip'+(a.useRef?' on':''),type:'button',onclick:set('useRef',!a.useRef)},sd?'用定妆图和第 1 页锁定角色与画风（推荐）':'用定妆图锁定主角（MiniMax 仅对人物有效）')),
+      a.style==='ink'&&['candy','night'].includes(a.palette)&&h('p',{class:'hint'},'提示：水墨淡彩会把颜色压淡，和“'+curPal().name+'”色调搭配效果不明显。'),
+      a.palette==='night'&&S.needs.avoid.includes('黑暗')&&h('p',{class:'hint'},'提示：需求里写了孩子怕黑，“星夜”色调整体偏暗，建议换一种。'),
+      h('p',{class:'hint'},!ext?'在线演示由内置引擎用矢量图形（SVG）代画，画质不代表真实生图模型的效果。':sd?'由 '+sdLabel()+' 生成：先画角色三视图，再把三视图和你认可的第 1 页一起作为参考图画其余各页，角色和画风更稳定。参考图出错的页会改为只按文字描述重画，并标注“未用参考图”。':(humanHero()?'由 MiniMax image-01 生成。主角是孩子本人，会用定妆图做人物参考。':'由 MiniMax image-01 生成。它的参考图只支持人物脸部，动物或原创角色只能靠文字设定保持一致，效果有限；建议在设置里换成 Seedream。'))),
+    !simple&&h('details',{class:'',open:pro||null},h('summary',{},'运镜安排：每页的景别与视角（可改）'),
+      h('p',{class:'hint'},'小图示意主角在画面里的大小。相邻两页景别不同，画面才不会雷同。'),
+      h('div',{class:'shots',style:'margin:8px 0'},s.pages.map((p,i)=>h('div',{class:'shot'},h('span',{html:shotThumb(p.shot)}),h('div',{},h('b',{},'第 '+p.n+' 页'),
+        h('select',{id:'sh-'+i,'aria-label':'第 '+p.n+' 页景别',onchange:e=>{p.shot=e.target.value;render();}},Object.keys(SHOTS).map(k=>h('option',{value:k,selected:p.shot===k||null},k))),
+        h('select',{id:'an-'+i,'aria-label':'第 '+p.n+' 页视角',onchange:e=>{p.angle=e.target.value;render();}},Object.keys(ANGLES).map(k=>h('option',{value:k,selected:p.angle===k||null},k))))))),
+      pro&&ext&&h('details',{},h('summary',{},'第 2 页的生图提示词（'+imgName()+'）'),h('pre',{class:'pp'},sd?sdPagePrompt(Math.min(2,s.pages.length),'',a.useRef?2:0):t2iPrompt(Math.min(2,s.pages.length))))),
+    h('div',{class:'card sec'},h('h2',{},simple?'先画一页看看':'单页试画'),
+      a.sheet&&h('div',{},h('h3',{style:'margin-top:0'},simple?'主角长这样':'角色定妆图（全书一致性参考）'),
+        a.sheet.st==='run'?h('p',{class:'hint'},'角色设计师正在画定妆图…'):a.sheet.st==='err'?h('p',{class:'hint'},'定妆图没有画成（'+a.sheet.err+'），插画师将只按文字描述保持角色一致。'):h('div',{class:'sheet'},h('img',{src:a.sheet.src,alt:'角色定妆图'})),
+        a.sheet.st==='ok'&&a.sheet.key.indexOf(key)!==0&&h('p',{class:'hint'},'画风或色调已改，下次作画前会重画定妆图。')),
+      a.imgs[1]?cell(1,true):h('p',{class:'hint'},simple?'画一页大约要等半分钟到一分钟。':'先画第 1 页，确认画风、色调和角色造型，再决定是否整本生成，避免整本返工。'),
+      h('div',{class:'row end'},h('button',{class:'btn'+(a.imgs[1]?' ghost':''),disabled:stale||!!a.batch||(a.imgs[1]&&a.imgs[1].st==='run'),onclick:trial},a.imgs[1]?(simple?'换个画法再画一次':'按当前设置重新试画'):(simple?'先画一页看看':'试画第 1 页')),
+        a.imgs[1]&&a.imgs[1].st==='ok'&&h('button',{class:'btn',disabled:stale||!!a.batch,onclick:()=>genAll(false)},simple?'喜欢，把整本书画完 →':'满意，生成整本（封面 + '+N+' 页）→'))),
+    (a.batch||okCount>1||oldCount>0)&&h('div',{class:'card sec'},h('div',{class:'row',style:'justify-content:space-between'},h('h2',{},'整本插图'),h('span',{class:'tag '+(okCount===N+1?'g':'w')},okCount+' / '+(N+1)+' 页已完成')),
+      a.batch&&h('div',{class:'bar'},h('i',{style:'width:'+Math.round(a.batch.done/a.batch.total*100)+'%'})),
+      oldCount>0&&!a.batch&&h('div',{class:'stale'},h('span',{},'有 '+oldCount+' 页是按旧的画风、色调或画幅画的。'),h('button',{class:'btn sm',onclick:()=>genAll(false)},'用新设置补画')),
+      h('div',{class:'gal'},Array.from({length:N+1},(_,i)=>cell(i,false))),
+      h('div',{class:'row end'},a.batch?h('button',{class:'btn ghost',onclick:()=>{stopAll();render();}},'停止'):okCount<N+1&&h('button',{class:'btn ghost',onclick:()=>genAll(false)},'继续画没完成的页'),
+        h('button',{class:'btn',disabled:stale,onclick:enterRead},simple?'去看书 →':'开始阅读 →'))),
+    !(a.batch||okCount>1||oldCount>0)&&h('div',{class:'row end'},h('button',{class:'btn ghost',disabled:stale,onclick:enterRead},'不等插图，先读文字版 →')));}
+function cell(i,big){const r=S.art.imgs[i],p=i?S.story.pages[i-1]:null,simple=isSimple(),nid='note-'+i;
+  const changed=r&&r.st==='ok'&&r.hash!==pgHash(i);
+  return h('div',{class:'cell',style:big?'max-width:520px':''},
+    !r?h('div',{class:'ph'},'等待作画'):r.st==='run'?h('div',{class:'ph',role:'status'},(simple?'小画家':'插画师')+'正在画'+(i?'第 '+i+' 页':'封面')+'…'):r.st==='err'?h('div',{class:'ph'},r.err):h('img',{src:r.src,alt:(i?'第 '+i+' 页':'封面')+'插图'}),
+    h('div',{class:'cm'},h('div',{},h('b',{},i?'第 '+i+' 页':'封面'),p&&p.shot?h('span',{class:'tag',style:'margin-left:6px'},p.shot+' · '+p.angle):null,changed?h('span',{class:'tag w'},'文字或镜头已改'):null,r&&r.st==='ok'&&r.key!==artKey()?h('span',{class:'tag w'},'旧设置'):null,r&&r.noRef?h('span',{class:'tag w'},'未用参考图'):null),
+      p&&!big&&h('small',{style:'color:var(--muted)'},p.text.slice(0,34)+(p.text.length>34?'…':'')),
+      r&&r.st!=='run'&&!S.art.batch&&h('div',{class:'row'},!simple&&h('input',{class:'in',id:nid,style:'flex:1 1 120px;min-height:36px;font-size:.85rem',placeholder:'想怎么改（可不填）',value:S.ui.notes[i]||'',oninput:e=>{S.ui.notes[i]=e.target.value;}}),
+        h('button',{class:'btn ghost sm',onclick:async()=>{if(!engineOK('image'))return;await ensureSheet();paint(i,S.ui.notes[i]||'');}},'重画这页'))));}
+
+function vRead(){const s=S.story;if(!s)return vRole();const pages=bookPages(),i=Math.min(S.reader.i,pages.length-1),p=pages[i],simple=isSimple(),g=S.guide,last=i===pages.length-1;
+  const turn=d=>()=>{stopSay();S.reader.auto=false;S.reader.i=Math.max(0,Math.min(pages.length-1,i+d));render();};
+  return h('section',{class:'sec'},
+    storyStale()&&staleBar('需求已经改过，这本绘本是旧版本。','回到需求',()=>go('needs')),
+    h('div',{class:'book'},
+      h('div',{class:'pic'},p.img?h('img',{src:p.img.src,alt:p.cover?'封面':'第 '+p.n+' 页插图'}):h('div',{class:'noimg'},p.cover?'':'这一页还没有插图'),p.cover&&h('div',{class:'ttl'},s.title),h('span',{class:'ai'},'AI 生成')),
+      p.cover?h('p',{class:'txt',style:'font-size:1rem;color:var(--muted);text-align:center'},(S.needs.nick?'送给 '+S.needs.nick+' · ':'')+ROLES[S.role].name+'与智能体团队共同创作'):h('p',{class:'txt'},p.text),
+      !p.cover&&S.reader.tips&&p.interact&&h('p',{class:'tip'},(S.role==='child'?'小任务：':'互动提示：')+p.interact),
+      h('div',{class:'nav'},h('button',{class:'btn ghost',disabled:i===0,onclick:turn(-1)},'← 上一页'),h('span',{class:'pn'},p.cover?'封面':p.n+' / '+s.pages.length),h('button',{class:'btn',disabled:last,onclick:turn(1)},'下一页 →'))),
+    h('div',{class:'row',style:'justify-content:center'},
+      voiceOK()&&h('button',{class:'btn ghost',onclick:()=>{if(S.reader.auto){stopAll();render();}else{S.reader.auto=true;render();readAloud();}}},S.reader.auto?'■ 停止朗读':'🔊 从这页开始自动朗读'),
+      voiceOK()&&!S.reader.auto&&h('button',{class:'btn ghost',onclick:()=>say(p.text)},'只读这一页'),
+      !simple&&h('button',{class:'btn ghost',onclick:()=>{S.reader.tips=!S.reader.tips;render();}},S.reader.tips?'隐藏互动提示':'显示互动提示'),
+      (CAP.dl||!ONLINE)&&h('button',{class:'btn ghost',onclick:saveBook},'保存为网页文件')),
+    ttsCloud()?h('div',{class:'row',style:'justify-content:center'},h('span',{class:'hint'},'朗读声音：'),QUICK_VOICES.map(id=>h('button',{class:'chip'+(String(S.cfg.tts.voice)===id?' on':''),type:'button',onclick:()=>pickVoice(id,!S.reader.auto)},voiceName(id))),h('button',{class:'chip',type:'button',onclick:()=>{S.drawer=true;render();}},'更多声音…'))
+      :(!ONLINE&&voiceOK()&&h('p',{class:'hint',style:'text-align:center'},BK?'当前用设备自带的声音朗读。在“设置”里保存腾讯云密钥后可选自然语音。':'当前用设备自带的声音朗读（网页直连版不能使用腾讯云自然语音，请用 Windows 本地版）。')),
+    S.ui.ttsErr&&ttsCloud()&&h('p',{class:'hint',style:'text-align:center;color:var(--bad)'},S.ui.ttsErr),
+    S.ui.saved&&h('p',{class:'hint',style:'text-align:center'},S.ui.saved),
+    !voiceOK()&&h('p',{class:'hint',style:'text-align:center'},'这个设备上的 Claude 应用不提供朗读，在电脑浏览器里打开就能听。'),
+    h('div',{class:'card sec'},h('h2',{},simple?'读完聊一聊':'读后提问与延伸'),
+      S.load.guide?h('p',{class:'hint'},'导读馆员正在准备读后问题…'):!g?h('div',{},h('p',{},S.guideErr||'还没有读后内容。'),h('button',{class:'btn ghost sm',onclick:genGuide},'生成读后内容')):h('div',{class:'sec'},
+        h('div',{class:'list'},g.questions.map(q=>h('div',{class:'row'},!simple&&h('span',{class:'tag'},q.level),h('span',{style:'flex:1'},q.q),speaker(q.q,'听')))),
+        g.tips.length?h('div',{},h('h3',{},S.role==='librarian'?'带读要点':'陪读提示'),h('ul',{class:'plain'},g.tips.map(t=>h('li',{},t)))):null,
+        g.activity&&g.activity.name?h('div',{},h('h3',{},(S.role==='librarian'?'活动方案：':S.role==='child'?'小挑战：':'延伸活动：')+g.activity.name),h('ol',{class:'beats'},(g.activity.steps||[]).map(t=>h('li',{},t))),(g.activity.materials||[]).length?h('p',{class:'hint'},'材料：'+g.activity.materials.join('、')):null):null,
+        S.role==='librarian'&&g.keywords.length?h('div',{},h('h3',{},'馆藏检索主题词'),g.keywords.map(k=>h('span',{class:'tag'},k)),h('p',{class:'hint'},'用这些词在本馆 OPAC 里检索可衔接的馆藏，不直接推荐书名，避免推荐到本馆没有或不存在的书。')):null)),
+    h('div',{class:'card sec'},h('h2',{},simple?'和领读员说说话':'和这本书聊一聊'),
+      S.chat.length?h('div',{class:'chat'},S.chat.map(m=>h('div',{class:'msg '+(m.role==='user'?'u':'a')},m.content)),S.load.chat&&h('div',{class:'msg a'},'…')):h('p',{class:'hint'},'孩子可以问书里的事，比如“为什么种子要喝水？”'),
+      textField('chat-in',()=>S.chatIn,v=>{S.chatIn=v;},{ph:'想问什么？',enter:sendChat}),
+      h('div',{class:'row end'},h('button',{class:'btn',disabled:S.load.chat,onclick:sendChat},'发送'))),
+    h('div',{class:'row end'},h('button',{class:'btn ghost',onclick:()=>go('art')},'回去改插图'),h('button',{class:'btn ghost',onclick:()=>{S.wiz=0;go('needs');}},'改需求，再做一本')));}
+
+/* ========== 设置抽屉 ========== */
+function engineCard(){
+  if(ONLINE)return h('div',{class:'card'},h('span',{class:'tag w'},'引擎说明'),' 这本应用的设定是 DeepSeek 写文字、Seedream 或 MiniMax 画图、腾讯云语音朗读。在线演示页被平台禁止直连外部接口，所以这里由内置引擎代演（Claude 写文字、画矢量插图），流程和选项完全一样。要真实调用，请使用 Windows 本地应用或部署好的网页版。');
+  if(BK){
+    if(BK.needCode&&!S.ui.codeOk)return h('div',{class:'card sec'},h('h2',{},'请输入访问码'),h('p',{class:'hint'},'这个网页版由图书馆部署，生成绘本需要访问码，请向馆员索取。'),h('div',{class:'tf'},h('input',{class:'in',id:'acc-code',type:'password',autocomplete:'off',value:S.ui.code||'',oninput:e=>{S.ui.code=e.target.value.trim();},onkeydown:e=>{if(e.key==='Enter')checkCode();}}),h('button',{class:'btn sm',onclick:checkCode},'确定')),S.ui.codeMsg&&h('p',{class:'hint'},S.ui.codeMsg));
+    if(BK.text&&imgReady())return null;
+    return BK.mode==='local'?h('div',{class:'card sec'},h('h2',{},'第一次使用：保存密钥'),h('p',{class:'hint'},'文字由 DeepSeek 生成，图片由 Seedream（推荐）或 MiniMax 生成，朗读用腾讯云语音（可选）。保存一次，以后打开自动使用。'),cfgFields('text',false),cfgFields('image',false),cfgFields('tts',false))
+      :h('div',{class:'card'},h('span',{class:'tag b'},'暂不可用'),' 服务器还没有配置 '+[!BK.text&&'DeepSeek',!imgReady()&&imgName()].filter(Boolean).join('、')+' 密钥，请联系管理员。');}
+  if(S.cfg.text.key&&imgReady())return null;
+  return h('div',{class:'card sec'},h('h2',{},'先填密钥'),h('p',{class:'hint'},'文字由 DeepSeek 生成，图片由 Seedream（推荐）或 MiniMax 生成。密钥只在这台电脑的这个页面里使用，直接发给官方接口。'),cfgFields('text',false),cfgFields('image',false));}
+const KEYDEF={
+  deepseekKey:{label:'DeepSeek API 密钥',ph:'在 platform.deepseek.com 创建',ok:()=>BK.text},
+  arkKey:{label:'火山方舟 API Key（Seedream）',ph:'在火山方舟“API Key 管理”里创建',ok:()=>BK.ark},
+  minimaxKey:{label:'MiniMax API 密钥',ph:'在 platform.minimaxi.com 创建（按量付费的密钥）',ok:()=>BK.image},
+  tcId:{label:'腾讯云 SecretId',ph:'可用赛珍珠讲解机器人那个有语音合成权限的子账号',ok:()=>!!(BK.keys&&BK.keys.tcId)},
+  tcKey:{label:'腾讯云 SecretKey',ph:'与上面的 SecretId 配对',ok:()=>!!(BK.keys&&BK.keys.tcKey)}};
+function keyField(id){const d=KEYDEF[id],ok=d.ok(),msg=(S.ui.keyMsg||{})[id],fid='k-'+id;
+  return h('div',{},h('div',{class:'fld'},h('label',{for:fid},d.label+(ok?'（已保存，要更换再粘贴新的）':'（还没有保存）')),h('input',{class:'in',id:fid,type:'password',autocomplete:'off',placeholder:d.ph,value:S.ui['k'+id]||'',oninput:e=>{S.ui['k'+id]=e.target.value.trim();}})),
+    h('div',{class:'row'},h('button',{class:'btn sm',onclick:()=>saveKey(id,false)},'保存'),ok&&h('button',{class:'btn ghost sm',onclick:()=>saveKey(id,true)},'删除已保存的'),msg&&h('span',{class:'hint'},msg)));}
+const modelChips=(cur,setf)=>h('div',{class:'chips'},['deepseek-v4-pro','deepseek-v4-flash'].map(m=>h('button',{class:'chip'+(cur===m?' on':''),type:'button',onclick:()=>{setf(m);render();}},m==='deepseek-v4-pro'?'V4 Pro（文笔更好）':'V4 Flash（更快、更省）')));
+function cfgFields(kind,full){const isText=kind==='text',isImg=kind==='image',t=S.cfg.text,local=BK&&BK.mode==='local';
+  const title=isText?'文字：策划、写作、润色、审校、分镜、导读都用 DeepSeek':isImg?'图片：定妆图和全部插图':'朗读：腾讯云自然语音（可选）';
+  if(ONLINE)return h('div',{class:'card'},h('h3',{style:'margin-top:0'},title),h('p',{class:'hint'},'在线演示页不能直连外部接口，暂由内置引擎代演。请使用 Windows 应用或网页版。'));
+  if(isText){const test=h('div',{class:'row'},h('button',{class:'btn ghost sm',onclick:()=>testConn()},'测试连接'),S.ui.test.text&&h('span',{class:'hint'},S.ui.test.text));
+    return h('div',{class:'card'},h('h3',{style:'margin-top:0'},title),
+      h('p',{class:'hint',style:'margin:0'},'写故事（策划、作家、文学编辑）用：'),modelChips(t.writeModel,m=>{t.writeModel=m;}),
+      h('p',{class:'hint',style:'margin:6px 0 0'},'其他（审校、分镜、导读、对谈）用：'),modelChips(t.model,m=>{t.model=m;}),
+      BK?(local?keyField('deepseekKey'):h('p',{class:'hint'},'DeepSeek 密钥由服务器管理员配置：'+(BK.text?'已配置':'未配置')+'。')):h('div',{},
+        full&&h('div',{class:'fld'},h('label',{for:'text-ep'},'接口地址'),h('input',{class:'in',id:'text-ep',value:t.endpoint,oninput:e=>{t.endpoint=e.target.value.trim();}})),
+        h('div',{class:'fld'},h('label',{for:'text-key'},'DeepSeek API 密钥'),h('input',{class:'in',id:'text-key',type:'password',autocomplete:'off',value:t.key,placeholder:'在 platform.deepseek.com 创建',oninput:e=>{t.key=e.target.value.trim();persist();}}))),
+      (!BK||BK.text)&&test);}
+  if(isImg){const sd=imgEngine()==='seedream';
+    const pick=h('div',{class:'chips'},[['seedream','Seedream（推荐，角色更一致）'],['minimax','MiniMax image-01']].map(([v,l])=>h('button',{class:'chip'+(imgEngine()===v?' on':''),type:'button',onclick:()=>{S.cfg.img.engine=v;S.art.sheet=null;render();}},l)));
+    const note=h('p',{class:'hint'},sd?'Seedream 支持多张参考图，会用角色三视图和第 1 页锁定全书的角色与画风。':'MiniMax 的参考图只支持人物脸部，动物或原创角色的一致性较弱。');
+    const known=SD_MODELS.some(x=>x[0]===S.cfg.ark.model);
+    const sdModel=sd&&h('div',{class:'sec',style:'gap:6px;margin:6px 0'},h('p',{class:'hint',style:'margin:0'},'选择你在火山方舟“开通管理”里已经开通的模型：'),
+      h('div',{class:'chips'},SD_MODELS.map(([v,l])=>h('button',{class:'chip'+(S.cfg.ark.model===v?' on':''),type:'button',onclick:()=>{S.cfg.ark.model=v;S.ui.sdCustom=false;S.art.sheet=null;try{localStorage.setItem('thf-sd-model',v);}catch(x){}render();}},l)),
+        h('button',{class:'chip'+(!known||S.ui.sdCustom?' on':''),type:'button',onclick:()=>{S.ui.sdCustom=true;render();}},'其他（自己填编号）')),
+      (!known||S.ui.sdCustom)&&h('div',{class:'fld'},h('label',{for:'sd-model'},'模型编号（在火山方舟“开通管理”或“模型广场”的模型详情里复制，形如 doubao-seedream-…）'),
+        h('input',{class:'in',id:'sd-model',value:S.cfg.ark.model,oninput:e=>{S.cfg.ark.model=e.target.value.trim();S.art.sheet=null;try{localStorage.setItem('thf-sd-model',S.cfg.ark.model);}catch(x){}}})));
+    return h('div',{class:'card'},h('h3',{style:'margin-top:0'},title),pick,sdModel,note,
+      BK?(local?keyField(sd?'arkKey':'minimaxKey'):h('p',{class:'hint'},imgName()+' 密钥由服务器管理员配置：'+(imgReady()?'已配置':'未配置')+'。')):
+        h('div',{class:'fld'},h('label',{for:'img-key'},sd?'火山方舟 API Key':'MiniMax API 密钥'),h('input',{class:'in',id:'img-key',type:'password',autocomplete:'off',value:sd?S.cfg.ark.key:S.cfg.image.key,placeholder:sd?KEYDEF.arkKey.ph:KEYDEF.minimaxKey.ph,oninput:e=>{if(sd)S.cfg.ark.key=e.target.value.trim();else S.cfg.image.key=e.target.value.trim();persist();}})));}
+  if(!BK)return null;
+  return h('div',{class:'card'},h('h3',{style:'margin-top:0'},title),
+    h('p',{class:'hint'},'与赛珍珠讲解机器人相同，用腾讯云超自然大模型 2.0 音色，保存后可在“显示与朗读”里挑选声音。不填也能用，朗读会改用电脑自带的声音。'),
+    local?h('div',{},keyField('tcId'),keyField('tcKey')):h('p',{class:'hint'},'腾讯云语音由服务器管理员配置：'+(BK.tts?'已配置':'未配置')+'。'));}
+function ttsSettings(){
+  if(ONLINE)return null;
+  if(!BK)return h('div',{class:'stale'},h('span',{},'当前是“网页直连版”，朗读用的是设备自带的声音。腾讯云自然语音每次请求都要用 SecretKey 签名，密钥不能放进网页，所以需要后台转发：请从桌面“绘声绘色”图标打开 Windows 本地版，或给静态网页配上云函数，再在这里选音色。'));
+  if(!BK.tts)return h('p',{class:'hint'},BK.mode==='local'?'还没有保存腾讯云 SecretId 和 SecretKey，朗读暂用设备自带的声音。请在上面“模型接入 → 朗读”里保存。':'服务器没有配置腾讯云语音，朗读使用设备自带的声音。');
+  const tt=S.cfg.tts,groups=[...new Set(VOICES.map(v=>v.g))],known=VOICES.some(v=>v.id===String(tt.voice));
+  return h('div',{class:'sec'},
+    h('div',{class:'chips'},[['tencent','腾讯云自然语音 2.0'],['system','设备自带声音']].map(([v,l])=>h('button',{class:'chip'+(tt.engine===v?' on':''),type:'button',onclick:()=>{stopSay();tt.engine=v;saveTts();render();}},l))),
+    tt.engine==='tencent'&&h('div',{class:'sec'},
+      h('p',{class:'hint',style:'margin:0'},'点一个声音就会试听，并用它朗读整本书。当前：'+voiceName(tt.voice)+'（'+tt.voice+'）'),
+      groups.map(g=>h('div',{},h('div',{class:'hint',style:'margin:4px 0'},g),h('div',{class:'chips'},VOICES.filter(v=>v.g===g).map(v=>h('button',{class:'chip'+(String(tt.voice)===v.id?' on':''),type:'button',title:v.id,onclick:()=>pickVoice(v.id,true)},h('b',{},v.n),h('span',{style:'font-size:.8em;opacity:.8'},v.d)))))),
+      h('details',{open:!known||null},h('summary',{},'使用其他音色编号'),h('div',{class:'fld'},h('label',{for:'tts-voice'},'在腾讯云“音色列表”里查到的编号，例如 603004'),
+        h('div',{class:'tf'},h('input',{class:'in',id:'tts-voice',inputmode:'numeric',value:tt.voice,oninput:e=>{tt.voice=e.target.value.replace(/\D/g,'');S.ui.voicePicked=true;saveTts();}}),h('button',{class:'btn ghost sm',onclick:()=>say(VOICE_DEMO)},'🔊 试听')))),
+      h('div',{class:'hint',style:'margin:4px 0'},'语速'),
+      h('div',{class:'chips'},[['-1','慢（0.8 倍）'],['-0.5','适中（推荐讲故事）'],['0','正常']].map(([v,l])=>h('button',{class:'chip'+(String(tt.speed)===v?' on':''),type:'button',onclick:()=>{tt.speed=v;saveTts();render();}},l))),
+      S.ui.ttsErr&&h('p',{class:'hint',style:'color:var(--bad)'},S.ui.ttsErr+'（若提示音色不可用，请到腾讯云语音合成控制台确认已开通该类音色或购买了资源包）'),
+      h('p',{class:'hint'},'爷爷奶奶模式会自动放慢到 0.8 倍。不同身份有各自的推荐声音，手动选过后就一直用你选的。听过的句子会缓存，重复朗读不再计费。')));}
+async function saveKey(id,del){const v=del?'':(S.ui['k'+id]||'');S.ui.keyMsg=S.ui.keyMsg||{};
+  if(!del&&!v){S.ui.keyMsg[id]='请先粘贴。';render();return;}
+  try{const r=await fetch(API+'/api/config',{method:'POST',headers:hdr(),body:JSON.stringify({[id]:v})});if(!r.ok)throw 0;BK=await r.json();S.ui['k'+id]='';S.ui.keyMsg[id]=del?'已删除。':'已保存。';
+    if(id==='arkKey'&&!del)S.cfg.img.engine='seedream';if(id==='minimaxKey'&&!del&&!BK.ark)S.cfg.img.engine='minimax';}
+  catch(e){S.ui.keyMsg[id]='保存失败：本地服务没有响应，请重新启动绘声绘色。';}
+  render();}
+async function checkCode(){try{const r=await fetch(API+'/api/status',{headers:hdr()});const j=await r.json();BK=j;
+    if(j.codeOk){S.ui.codeOk=true;S.ui.codeMsg='';try{sessionStorage.setItem('thf-code',S.ui.code);}catch(e){}}else S.ui.codeMsg='访问码不对。';}
+  catch(e){S.ui.codeMsg='服务器没有响应，请稍后再试。';}render();}
+async function testConn(){if(BK){S.ui.test.text='测试中…';render();try{const r=await fetch(API+'/api/test',{headers:hdr()});const j=await r.json();S.ui.test.text=j.ok?'连接成功。':(j.msg||'连接失败。');}catch(e){S.ui.test.text='服务没有响应。';}render();return;}
+  const c=S.cfg.text;if(!c.key){S.ui.test.text='请先填写密钥。';render();return;}S.ui.test.text='测试中…';render();
+  try{const r=await fetch(c.endpoint.replace(/\/$/,'')+'/models',{headers:{Authorization:'Bearer '+c.key}});S.ui.test.text=r.ok?'连接成功。':'接口返回 '+r.status+'，请检查密钥。';}
+  catch(e){S.ui.test.text=ERR.network;}render();}
+function drawer(){const r=S.role||'parent',full=r==='librarian'||r==='parent'||S.ui.fullCfg||S.ui.gateOk;
+  const close=()=>{S.drawer=false;render();};
+  const modelSec=full?h('div',{class:'sec'},cfgFields('text',r==='librarian'||S.ui.fullCfg||S.ui.gateOk),cfgFields('image',r==='librarian'||S.ui.fullCfg||S.ui.gateOk),BK&&cfgFields('tts',false))
+    :r==='elder'?h('div',{class:'guide3'},
+        h('div',{class:'g'},h('span',{class:'num'},'1'),h('div',{},h('b',{},'机器要先连上“会写故事的大脑”'),h('br'),'演示用的已经替您连好了，不用动。',h('div',{},speaker('做绘本的机器，要先连上一个会写故事的大脑。演示用的已经替您连好了，不用动。')))),
+        h('div',{class:'g'},h('span',{class:'num'},'2'),h('div',{},h('b',{},'如果馆员给了您一张密钥卡'),h('br'),'请把卡片交给馆员或家里人帮您填。',h('div',{},speaker('如果图书馆的馆员给了您一张写着密钥的卡片，请把卡片交给馆员，或者家里人，帮您填进去。')))),
+        h('div',{class:'g'},h('span',{class:'num'},'3'),h('div',{},h('b',{},'关掉这一页，接着做绘本'),h('br'),'点右下角的“关闭”就行。',h('div',{},speaker('好了以后，点关闭，接着做绘本就行。')))),
+        h('button',{class:'btn ghost sm',onclick:()=>{S.ui.fullCfg=true;render();}},'显示完整设置（请馆员协助）'))
+    :h('div',{class:'card'},h('p',{},'这里是大人的设置。请找馆员老师或爸爸妈妈帮忙。'),h('div',{class:'fld'},h('label',{for:'gate'},'大人请回答：七加八等于几？'),h('input',{class:'in',id:'gate',inputmode:'numeric',value:S.ui.gate,oninput:e=>{S.ui.gate=e.target.value;if(S.ui.gate.trim()==='15'){S.ui.gateOk=true;render();}}})));
+  const team=(r==='librarian'||(r==='parent'))?h('div',{class:'sec'},h('p',{class:'hint'},r==='librarian'?'每个智能体的约束会原样写进它的提示词。可按本馆的服务规范和活动目标修改。':'一般不用改。想让故事更合心意时，可以给对应的智能体加一句要求。'),
+      AGENTS.map(a=>h('details',{},h('summary',{},a.name+'（'+a.cap+'）'),h('p',{class:'hint'},a.does),h('div',{class:'fld'},h('label',{for:'con-'+a.id},'约束'),h('textarea',{class:'in',id:'con-'+a.id,oninput:e=>{S.cons[a.id]=e.target.value;}},S.cons[a.id])),
+        r==='librarian'&&S.ag[a.id]&&S.ag[a.id].prompt?h('details',{},h('summary',{},'最近一次发给它的完整提示词'),h('pre',{class:'pp'},S.ag[a.id].prompt)):null)))
+    :h('div',{class:'list'},AGENTS.map(a=>h('div',{class:'card row'},h('div',{style:'flex:1'},h('b',{},a.kid),h('br'),a.say),speaker(a.say))));
+  return h('div',{class:'ovl',onclick:e=>{if(e.target===e.currentTarget)close();}},h('aside',{class:'drawer',role:'dialog','aria-label':'设置'},
+    h('div',{class:'row',style:'justify-content:space-between'},h('h2',{},'设置'),h('button',{class:'btn sm',onclick:close},'关闭')),
+    h('h3',{style:'margin:0'},'模型接入'),modelSec,
+    h('h3',{style:'margin:0'},r==='child'?'认识你的小伙伴':r==='elder'?'谁在帮您做绘本':'智能体团队与约束'),team,
+    !ONLINE&&h('div',{class:'sec'},h('h3',{style:'margin:0'},BK?'写作倾向':'写作倾向与密钥保存'),h('div',{class:'chips'},['稳妥','均衡','有创意'].map(v=>h('button',{class:'chip'+(S.cfg.creative===v?' on':''),type:'button',onclick:()=>{S.cfg.creative=v;render();}},v)),
+      h('button',{class:'chip'+(S.cfg.edit?' on':''),type:'button',onclick:()=>{S.cfg.edit=!S.cfg.edit;render();}},'文学编辑润色（多花约半分钟）'),
+      !BK&&h('button',{class:'chip'+(S.cfg.remember?' on':''),type:'button',onclick:()=>{S.cfg.remember=!S.cfg.remember;persist();render();}},'在这台电脑上记住密钥')),h('p',{class:'hint'},BK?'写作倾向只影响故事策划和故事作家。':'写作倾向只影响故事策划和故事作家。公用电脑请不要打开“记住密钥”。')),
+    h('h3',{style:'margin:0'},'显示与朗读'),
+    ttsSettings(),
+    h('div',{class:'chips'},h('button',{class:'chip'+(S.cfg.hc?' on':''),type:'button',onclick:()=>{S.cfg.hc=!S.cfg.hc;render();}},'高对比度'),
+      voiceOK()?h('button',{class:'chip'+(S.cfg.voice?' on':''),type:'button',onclick:()=>{S.cfg.voice=!S.cfg.voice;render();}},'自动语音提示'):h('span',{class:'hint'},'这个设备不支持朗读'),
+      h('span',{class:'hint'},CAP.dict?'语音输入：可用（输入框旁的“说话”按钮）':'语音输入：需在电脑版 Chrome 或 Edge 中打开')),
+    (r==='librarian'||r==='parent')&&h('details',{},h('summary',{},'设计依据'),h('ul',{class:'plain'},
+      h('li',{},'分级：年龄段参照 ',h('a',{href:'https://www.ttbz.org.cn/upload/file/20240102/6383978879120391368235683.pdf'},'T/BPDAC 001—2023《3—8岁儿童分级阅读指导》'),' 的五段划分。'),
+      h('li',{},'多智能体：参考导演智能体统筹、专职角色与场景智能体、用资产记忆库保持跨镜头一致的做法（',h('a',{href:'https://arxiv.org/html/2508.18781v3'},'AniME'),'）。'),
+      h('li',{},'绘本 Skill 的共同做法：先出角色卡和分页脚本，先做一页小样，用户认可后再批量生成（',h('a',{href:'https://smithery.ai/skills/wubin1836/ai-hive-life-child-picture-book'},'儿童故事绘本 Skill'),'）。'),
+      h('li',{},'写作：图文分工、翻页钩子、重复与变奏、具体胜过抽象、不说教等经典图画书写作原则，由故事作家起稿、文学编辑朗读润色。'),
+      h('li',{},'接口：DeepSeek ',h('a',{href:'https://api-docs.deepseek.com/zh-cn/updates'},'chat/completions'),'；Seedream 5.0 Flash / 5.5 / 4.0（火山方舟，多参考图）；MiniMax ',h('a',{href:'https://platform.minimaxi.com/docs/guides/image-generation'},'image-01'),'；腾讯云 ',h('a',{href:'https://cloud.tencent.com/document/product/441/18086'},'语音合成 TextToVoice'),'。')))));}
+
+initCaps();render();
+setTimeout(()=>{if(!CAP.checked){CAP.checked=true;render();}},11000);
+</script>
+</body>
+</html>
